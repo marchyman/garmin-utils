@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.24 2003/04/19 02:23:04 marc Exp $
+ *	$snafu: gpsprint.c,v 1.25 2003/04/23 20:48:19 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -146,6 +146,30 @@ get_float(const u_char * s)
 #endif
 
 /*
+ * Grab n strings from the given buffer.   Each string is
+ * assumed to be NULL terminated with a maximum of 50 characters
+ * before the NULL.   Enforce this by truncation if necessary.
+ */
+#define STRING_MAX 51
+static void
+get_strings(const u_char *buf, int bufsiz, u_short off, char *strings[],
+	    int string_cnt)
+{
+	int ix;
+
+	for (ix = 0; ix < string_cnt; ix++) {
+		strings[ix] = malloc(STRING_MAX);
+		if (strings[ix] != NULL) {
+			if (off > 0 && bufsiz > off)
+				off += strlcpy(strings[ix], &buf[off],
+					       STRING_MAX) + 1;
+			else
+				*strings[ix] = 0;
+		}
+	}
+}
+
+/*
  * Grab a string from a buffer given its offset and length.   Note,
  * the only size requirement is that the offset start before the
  * end of the buffer.
@@ -186,8 +210,10 @@ get_int(const u_char *buf, int bufsiz, u_short off, u_short len)
 /*
  * Table of offsets/lengths  for the various fields in each waypoint type
  * needed to print the waypoint.   An offset of 0 indicates that the field
- * does not exist in the given waypoint type.   The packet type is at offset
- * 0, thus the first character of the first field starts at offset 1.
+ * does not exist in the given waypoint type.   A length of zero indicates
+ * the beginning of a table of null terminated strings.
+ * The packet type is at offset 0, thus the first character of the first
+ * field starts at offset 1.
  */
 struct wpt_info {
 	int	wpt_type;
@@ -209,11 +235,11 @@ static struct wpt_info winfo[] = {
 	{ D102,  7, 11, 1,  0, 63, 2,  0, 0, 19, 40 },
 	{ D103,  7, 11, 1,  0, 59, 1, 60, 1, 19, 40 },
 	{ D104,  7, 11, 1,  0, 63, 2, 65, 1, 19, 40 },
-	{ D105,  1,  5, 0,  0,  9, 2,  0, 0, 11, 40 },
-	{ D106, 15, 19, 0,  0, 23, 2,  0, 0, 25, 40 },
+	{ D105,  1,  5, 0,  0,  9, 2,  0, 0, 11,  0 },
+	{ D106, 15, 19, 0,  0, 23, 2,  0, 0, 25,  0 },
 	{ D107,  7, 11, 1,  0, 59, 1, 60, 1, 19, 40 },
-	{ D108, 25, 29, 0, 33,  5, 2,  3, 1, 49, 51 },
-	{ D109, 25, 29, 0, 33,  5, 2,  0, 0, 53, 51 }
+	{ D108, 25, 29, 0, 33,  5, 2,  3, 1, 49,  0 },
+	{ D109, 25, 29, 0, 33,  5, 2,  0, 0, 53,  0 }
 };
 
 static struct wpt_info *
@@ -233,7 +259,7 @@ print_waypoint(const u_char *wpt, int len, int type)
 	double lat;
 	double lon;
 	char *name;
-	char *cmnt;
+	char *cmnt[2];
 	long sym;
 	long dsp;
 	float alt;
@@ -242,29 +268,50 @@ print_waypoint(const u_char *wpt, int len, int type)
 	if (wi != NULL) {
 		lat = semicircle2double(&wpt[wi->lat_off]);
 		lon = semicircle2double(&wpt[wi->long_off]);
+		printf("%10f %11f", lat, lon);
+
 		if (wi->alt_off)
 			alt = get_float(&wpt[wi->alt_off]);
 		else
 			alt = no_val.f;
-		name = get_string(wpt, len, wi->name_off, 6);
-		sym = get_int(wpt, len, wi->sym_off, wi->sym_len);
-		dsp = get_int(wpt, len, wi->disp_off, wi->disp_len);
-		cmnt = get_string(wpt, len, wi->cmnt_off, wi->cmnt_len);
+		if (alt != no_val.f)
+			printf(" A:%11f",alt);
 
-		if (alt == no_val.f)
-			printf("%s %10f %11f %5ld/%ld %s\n",
-			       name == NULL ? "-" : name, lat, lon,
-			       sym == -1 ? 0 : sym, dsp == -1 ? 0 : dsp,
-			       cmnt == NULL ? "" : cmnt);
-		else
-			printf("%s %10f %11f %11f %5ld/%ld %s\n",
-			       name == NULL ? "-" : name, lat, lon, alt,
-			       sym == -1 ? 0 : sym, dsp == -1 ? 0 : dsp,
-			       cmnt == NULL ? "" : cmnt);
-		if (name)
-			free(name);
-		if (cmnt)
-			free(cmnt);
+		sym = get_int(wpt, len, wi->sym_off, wi->sym_len);
+		if (sym != -1)
+			printf(" S:%ld", sym);
+
+		dsp = get_int(wpt, len, wi->disp_off, wi->disp_len);
+		if (dsp != -1)
+			printf(" D:%ld", dsp);
+
+		if (wi->name_off) {
+			/* old style: fixed len name/comment */
+			name = get_string(wpt, len, wi->name_off, 6);
+			if (name) {
+				printf(" I:%s", name);
+				free(name);
+			}
+			cmnt[0] = get_string(wpt, len, wi->cmnt_off,
+					     wi->cmnt_len);
+			if (cmnt[0]) {
+				printf(" C:%s", cmnt[0]);
+				free(cmnt[0]);
+			}
+		} else {
+			/* new style: null terminated ident/comment */
+			get_strings(wpt, len, wi->cmnt_off, cmnt, 2);
+			if (cmnt[0]) {
+				if (*cmnt[0])
+					printf(" I:%s", cmnt[0]);
+				free(cmnt[0]);
+			}
+			if (cmnt[1]) {
+				if (*cmnt[1])
+					printf(" C:%s", cmnt[1]);
+				free(cmnt[1]);
+			}
+		}
 	} else
 		warnx("unknown waypoint packet type: %d", type);
 }
@@ -284,8 +331,8 @@ struct rte_info {
 static struct rte_info rinfo[] = {
 	{ D200, 1,  0,  0, 0, 0 },
 	{ D201, 1,  2, 20, 0, 0 },
-	{ D202, 0,  1, 51, 0, 0 },
-	{ D210, 0, 21, 51, 1, 2 }
+	{ D202, 0,  1,  0, 0, 0 },
+	{ D210, 0, 21,  0, 1, 2 }
 };
 
 static struct rte_info *
@@ -303,21 +350,33 @@ print_route(const u_char *rte, int len, int type)
 {
 	struct rte_info *ri;
 	long num;
-	long class;
 	char *id;
 
 	ri = find_rte_info(type);
 	if (ri != NULL) {
 		num = get_int(rte, len, ri->num_off, 1);
-		id = get_string(rte, len, ri->cmnt_off, ri->cmnt_len);
-		class = get_int(rte, len, ri->class_off, ri->class_len);
-		if (class == -1)
-			printf("**%ld", num == -1 ? 0 : num);
+		if (ri->cmnt_len)
+			id = get_string(rte, len, ri->cmnt_off, ri->cmnt_len);
 		else
-			printf("*%ld", class);
-		printf(" %s\n", id ? id : "-");
+			get_strings(rte, len, ri->cmnt_off, &id, 1);
+		printf("**%ld %s\n", num == -1 ? 0 : num, id ? id : "");
 	} else
 		warnx("unknown route packet type: %d", type);
+}
+
+static void
+print_route_link(const u_char *rte, int len, int type)
+{
+	struct rte_info *ri;
+	long class;
+
+	ri = find_rte_info(type);
+	if (ri != NULL) {
+		class = get_int(rte, len, ri->class_off, ri->class_len);
+		if (class != -1)
+			printf(" L:%ld\n", class);
+	} else
+		warnx("unknown route link type: %d", type);
 }
 
 /*
@@ -422,32 +481,69 @@ gps_print(gps_handle gps, enum gps_cmd_id cmd, const u_char *packet,
 {
 	static int count;
 	static int limit;
+	static int rte_newline;
 
-	if (packet[0] == p_xfr_end)
+	if (packet[0] == p_xfr_end) {
+		if (rte_newline) {
+			rte_newline = 0;
+			printf("\n");
+		}
 		printf("[end transfer, %d/%d records]\n", count, limit);
-	else {	
+	} else {	
 		count += 1;
 		switch (packet[0]) {
 		case p_xfr_begin:
+			rte_newline = 0;
 			count = 0;
 			limit = get_int(packet, len, 1, 2);
-			printf("%s, %d records]\n",
-			       cmd == CMD_RTE ? RTE_HDR :
-			       cmd == CMD_TRK ? TRK_HDR :
-			       cmd == CMD_WPT ? WPT_HDR : "unknown",
-			       limit);
+			switch (cmd) {
+			case CMD_RTE:
+				printf(RTE_HDR ", %d records]\n"
+				       "# **n [route name]\n"
+				       "# lat long [A:altitude] [S:symbol] "
+				       "[D:display] [I:ident] [C:comment] "
+				       "[L:link]\n", limit);
+				break;
+			case CMD_TRK:
+				printf(TRK_HDR ", %d records]\n"
+				       "# [Track: track name]\n"
+				       "# yyyy-mm-dd hh:mm:ss lat long [alt] "
+				       "[start]\n", limit);
+				break;
+			case CMD_WPT:
+				printf(WPT_HDR ", %d records]\n"
+				       "# lat long [A:altitude] [S:symbol] "
+				       "[D:display] [I:ident] [C:comment]\n",
+				       limit);
+				break;
+			default:
+				printf("[unknown, %d records]\n", limit);
+				break;
+			}
 			break;
 		case p_wpt_data:
 			print_waypoint(packet, len, gps_get_wpt_type(gps));
+			printf("\n");
 			break;
 		case p_rte_hdr:
+			if (rte_newline) {
+				rte_newline = 0;
+				printf("\n");
+			}
 			print_route(packet, len, gps_get_rte_hdr_type(gps));
 			break;
 		case p_rte_wpt_data:
+			if (rte_newline) {
+				rte_newline = 0;
+				printf("\n");
+			}
 			print_waypoint(packet, len, gps_get_rte_wpt_type(gps));
+			rte_newline = 1;
 			break;
 		case p_rte_link:
-			print_route(packet, len, gps_get_rte_lnk_type(gps));
+			print_route_link(packet, len,
+					 gps_get_rte_lnk_type(gps));
+			rte_newline = 0;
 			break;
 		case p_trk_data:
 			print_track(packet, len, gps_get_trk_type(gps));

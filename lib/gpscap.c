@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpscap.c,v 1.12 2003/04/17 23:50:21 marc Exp $
+ *	$snafu: gpscap.c,v 1.13 2003/04/23 20:48:19 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -86,6 +86,7 @@ gps_cap_parse(gps_handle gps, const u_char *data, int datalen)
 				break;
 			}
 		}
+		gps_printf(gps, 3, "\n");
 	} else
 		gps_printf(gps, 2, __func__ ": unknown packet type %d\n",
 			   data[0]);
