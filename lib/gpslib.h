@@ -1,5 +1,5 @@
 /*
- * $snafu: gpslib.h,v 2.0 2003/10/06 19:13:52 marc Exp $
+ * $snafu: gpslib.h,v 2.1 2004/08/19 02:45:29 marc Exp $
  *
  * Public Domain, 2003, Marco S Hyman <marc@snafu.org>
  */
@@ -108,6 +108,14 @@ struct gps_lists {
 };
 
 /*
+ * The magic garmin "no value" value
+ */
+extern union no_val {
+	u_int32_t u;
+	float f;
+} no_val;
+
+/*
  * opaque type to identify a gps state structure
  */
 typedef void * gps_handle;
@@ -117,6 +125,7 @@ int	gps_cmd(gps_handle, enum gps_cmd_id);
 int	gps_debug(gps_handle);
 void	gps_display(char, const u_char *, int);
 struct gps_lists *gps_format(gps_handle, FILE *);
+float	gps_get_float(const u_char *);
 int	gps_get_rte_hdr_type(gps_handle);
 int	gps_get_rte_lnk_type(gps_handle);
 int	gps_get_rte_wpt_type(gps_handle);
@@ -130,8 +139,10 @@ void	gps_printf(gps_handle, int, const char *, ...)
 	__attribute__((__format__(__printf__,3,4)));
 int	gps_product(gps_handle, int *, int *, char **);
 int	gps_protocol_cap(gps_handle);
+int	gps_put_float(u_char *, float);
 int	gps_read(gps_handle, u_char *, int);
 int	gps_recv(gps_handle, int, u_char *, int *);
+double	gps_semicircle2double(const u_char *);
 int	gps_send(gps_handle, const u_char *, int);
 int	gps_send_ack(gps_handle, u_char);
 int	gps_send_nak(gps_handle, u_char);

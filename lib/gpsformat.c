@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsformat.c,v 2.1 2004/06/27 20:43:00 marc Exp $
+ * $snafu: gpsformat.c,v 2.2 2004/08/19 02:45:29 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -25,12 +25,6 @@ enum {
 	ROUTES,
 	TRACKS
 };
-
-/*
- * Magic value that translates to a float value of 1.0e25 in the GPS
- * and indicates an unsupported or unknown value.
- */
-static u_char no_val[] = { 81, 89, 4, 105 };
 
 /*
  * Figure out the operating state from the data in the buffer arg.
@@ -409,16 +403,13 @@ d108_wpt(int state, char *name, double lat, double lon, float alt,
 	len += 4;
 
 	/* byte 33-36: alt */
-	memcpy(&data[len], &alt, 4);
-	len += 4;
+	len += gps_put_float(&data[len], alt);
 
 	/* byte 37-40: depth */
-	memcpy(&data[len], no_val, 4);
-	len += 4;
+	len += gps_put_float(&data[len], no_val.f);
 
 	/* byte 41-44: proximity */
-	memcpy(&data[len], no_val, 4);
-	len += 4;
+	len += gps_put_float(&data[len], no_val.f);
 
 	/* byte 45-48: state and country codes: set to the empty string */
 	data[len++] = ' ';
@@ -496,16 +487,13 @@ d109_wpt(int state, char *name, double lat, double lon, float alt,
 	len += 4;
 
 	/* byte 33-36: alt */
-	memcpy(&data[len], &alt, 4);
-	len += 4;
+	len += gps_put_float(&data[len], alt);
 
 	/* byte 37-40: depth */
-	memcpy(&data[len], no_val, 4);
-	len += 4;
+	len += gps_put_float(&data[len], no_val.f);
 
 	/* byte 41-44: proximity */
-	memcpy(&data[len], no_val, 4);
-	len += 4;
+	len += gps_put_float(&data[len], no_val.f);
 
 	/* byte 45-48: state and country codes: set to the empty string */
 	data[len++] = ' ';
@@ -568,7 +556,7 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 
 	*link = -1;
 	sym = disp = 0;
-	alt = 1.0e25;
+	alt = no_val.f;
 	name[0] = 0;
 	cmnt[0] = 0;
 	data[0] = 0;
@@ -588,8 +576,6 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 			len = GPS_STRING_MAX;
 		switch (toupper(beg[-1])) {
 		case 'A':
-			/* altitude ignored */
-			/*  not anymore :-) */
 			sscanf(&beg[1], "%f", &alt);
 			break;
 		case 'W':
@@ -883,10 +869,8 @@ tracks(gps_handle gps, u_char *buf)
 	 * supported by this unit.
 	 */
 	if (gps_get_trk_type(gps) == D301) {
-		memcpy(&data[len], no_val, 4);
-		len += 4;
-		memcpy(&data[len], no_val, 4);
-		len += 4;
+		len += gps_put_float(&data[len], no_val.f);
+		len += gps_put_float(&data[len], no_val.f);
 	}
 
 	/* start indicator */

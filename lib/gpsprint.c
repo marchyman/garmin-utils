@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsprint.c,v 2.1 2004/06/27 20:43:00 marc Exp $
+ * $snafu: gpsprint.c,v 2.2 2004/08/19 02:45:29 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -32,123 +32,6 @@
  * constant to turn it into UNIX time.
  */
 #define UNIX_TIME_OFFSET	631065600L
-
-/*
- * Given the address to the start of a `semicircle' in data received
- * from a gps unit convert it to a double.
- */
-static double
-semicircle2double(const u_char * s)
-{
-	long work = s[0] + (s[1] << 8) + (s[2] << 16) + (s[3] << 24);
-	return work * 180.0 / (double) (0x80000000);
-}
-
-#if defined(__vax__)
-
-/*
- * convert the IEEE754 single precision little endian stream to a
- * VAX F floating point data type.
- */
-static float
-get_float(const u_char * s)
-{
-	float ret;
-	u_int8_t buf[4], p[4];
-	int sign, exp, mant;
-
-	/* flip to IEEE754 single precision big endian */
-	p[0] = s[3];
-	p[1] = s[2];
-	p[2] = s[1];
-	p[3] = s[0];
-
-	sign = p[0] & 0x80;
-	exp = ((p[0] & 0x7f) << 1) | ((p[1] & 0x80) >> 7);
-	memset(buf, '\0', sizeof(buf));
-
-	mant = p[1] & 0x7f;
-	mant <<= 8;
-	mant |= p[2] & 0xff;
-	mant <<= 8;
-	mant |= p[3] & 0xff;
-
-	if (exp == 0) {
-		if (mant == 0) {
-			/* true zero */
-			goto out;
-		} else {
-			/* subnormal, fail */
-			buf[1] = 0x80;
-			goto out;
-		}
-	}
-
-	if (exp == 255) {
-		/* +/- infinity or signaling/quiet NaN, fail */
-		buf[1] = 0x80;
-		goto out;
-	}
-
-	/* Ok, everything else is "normal" */
-
-	exp = exp - 127 + 129;
-	buf[0] = ((exp & 1) << 7) | ((mant >> 16) & 0x7f);
-	buf[1] = (exp >> 1) | (sign ? 0x80 : 0);
-	buf[2] = (mant >> 0) & 0xff;
-	buf[3] = (mant >> 8) & 0xff;
-
-out:
-	memcpy(&ret, buf, sizeof(ret));
-	return (ret);
-}
-
-#elif BYTE_ORDER == LITTLE_ENDIAN
-
-/*
- * Magic value used by garmin to signify an "empty" float field.
- */
-union {
-	u_int32_t u;
-	float f;
-} no_val = { 0x69045951 };
-
-static float
-get_float(const u_char * s)
-{
-	float f;
-
-	memcpy(&f, s, sizeof(f));
-	return (f);
-}
-
-#elif BYTE_ORDER == BIG_ENDIAN
-
-/*
- * Magic value used by garmin to signify an "empty" float field.
- */
-static union {
-	u_int32_t u;
-	float f;
-} no_val = { 0x51590469 };
-
-static float
-get_float(const u_char * s)
-{
-	float f;
-	u_char t[4];
-
-	t[0] = s[3];
-	t[1] = s[2];
-	t[2] = s[1];
-	t[3] = s[0];
-	memcpy(&f, t, sizeof(f));
-	return (f);
-}
-
-#else
-# error "unknown float conversion"
-#endif
 
 /*
  * Grab n strings from the given buffer.   Each string is
@@ -276,12 +159,12 @@ print_waypoint(const u_char *wpt, int len, int type)
 
 	wi = find_wpt_info(type);
 	if (wi != NULL) {
-		lat = semicircle2double(&wpt[wi->lat_off]);
-		lon = semicircle2double(&wpt[wi->long_off]);
+		lat = gps_semicircle2double(&wpt[wi->lat_off]);
+		lon = gps_semicircle2double(&wpt[wi->long_off]);
 		printf("%10f %11f", lat, lon);
 
 		if (wi->alt_off)
-		alt = get_float(&wpt[wi->alt_off]);
+			alt = gps_get_float(&wpt[wi->alt_off]);
 		else
 			alt = no_val.f;
 		if ((alt != no_val.f) && alt < 5.0e24)
@@ -462,8 +345,8 @@ print_track(const u_char *trk, int len, int type)
 			printf("Track: %s\n", id);
 			free(id);
 		} else {
-			lat = semicircle2double(&trk[ti->lat_off]);
-			lon = semicircle2double(&trk[ti->long_off]);
+			lat = gps_semicircle2double(&trk[ti->lat_off]);
+			lon = gps_semicircle2double(&trk[ti->long_off]);
 			time = get_int(trk, len, ti->time_off, ti->time_len);
 			if (time != -1) {
 				time += UNIX_TIME_OFFSET;
@@ -472,7 +355,7 @@ print_track(const u_char *trk, int len, int type)
 			} else
 				buf[0] = 0;
 			if (ti->alt_off)
-				alt = get_float(&trk[ti->alt_off]);
+				alt = gps_get_float(&trk[ti->alt_off]);
 			else
 				alt = no_val.f;
 			/* skip depth for now */
