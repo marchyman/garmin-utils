@@ -1,3 +1,13 @@
+List of changes/additions (for 1.9)
+
+ - rewrite the output code to make it easier to support new protocols
+   and data formats.  Some output formats have changed.
+
+ - rewrite the code that prepares data for upload to gps to handle the
+   new output formats in addition to old formats.
+
+ - debugging code clean-up
+
 List of changes/additions (for 1.8)
 
 - code shuffle.   Several things were moved around.

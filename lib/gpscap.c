@@ -1,12 +1,11 @@
 /*
- *	$snafu: gpscap.c,v 1.9 2003/04/11 20:28:45 marc Exp $
+ *	$snafu: gpscap.c,v 1.10 2003/04/11 23:46:53 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <err.h>
 
 #include "gpslib.h"
 
@@ -22,7 +21,7 @@
  * processed.  All others are ignored.
  */
 static void
-gps_protocol_parse(gps_handle gps, const unsigned char *data, int datalen)
+gps_cap_parse(gps_handle gps, const u_char *data, int datalen)
 {
 	int ix;
 	int tag;
@@ -34,7 +33,8 @@ gps_protocol_parse(gps_handle gps, const unsigned char *data, int datalen)
 		for (ix = 1; ix + 2 < datalen; ix += 3) {
 			tag = data[ix];
 			val = data[ix + 1] + (data[ix + 2] << 8);
-			gps_printf(gps, 3, "Capability %c%03d\n", tag, val);
+			gps_printf(gps, 3, __func__ ": capability %c%03d\n",
+				   tag, val);
 			switch (tag) {
 			case 'A':
 				proto = val;
@@ -84,7 +84,8 @@ gps_protocol_parse(gps_handle gps, const unsigned char *data, int datalen)
 			}
 		}
 	} else
-		gps_printf(gps, 2, "unknown packet type %d\n", data[0]);
+		gps_printf(gps, 2, __func__ ": unknown packet type %d\n",
+			   data[0]);
 }
 
 /*
@@ -103,7 +104,7 @@ int
 gps_protocol_cap(gps_handle gps)
 {
 	int retries = 5;
-	unsigned char *data = malloc(GPS_FRAME_MAX);
+	u_char *data = malloc(GPS_FRAME_MAX);
 	int datalen;
 
 	/* Start with a set of default capabilities.   These will be
@@ -115,24 +116,24 @@ gps_protocol_cap(gps_handle gps)
 	gps_set_trk_type(gps, D300);
 
 	if (! data) {
-		gps_printf(gps, 1, "no memory: protocol capabilities\n");
+		gps_printf(gps, 0, __func__ ": no memory\n");
 		return -1;
 	}
-	gps_printf(gps, 3, "recv: protocol capabilities\n");
+	gps_printf(gps, 3, __func__ ": recv\n");
 	while (retries--) {
 		datalen = GPS_FRAME_MAX;
 		switch (gps_recv(gps, RCV_TO, data, &datalen)) {
 		case -1:
 			gps_send_nak(gps, *data);
-			gps_printf(gps, 3, "retry: protocol capabilities\n");
+			gps_printf(gps, 3, __func__ ": retry\n");
 			break;
 		case 0:
 			goto done;
 		case 1:
-			gps_protocol_parse(gps, data, datalen);
+			gps_cap_parse(gps, data, datalen);
 			gps_send_ack(gps, *data);
 			free(data);
-			gps_printf(gps, 3, "rcvd: protocol capabilities\n");
+			gps_printf(gps, 3, __func__ ": rcvd\n");
 			return 0;
 		}
 	}

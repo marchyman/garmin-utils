@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps2.c,v 1.8 2003/04/11 20:28:45 marc Exp $
+ *	$snafu: gps2.c,v 1.9 2003/04/11 23:46:53 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -24,15 +24,15 @@
  *	DLE
  *	ETX
  */
-static unsigned char *
-gps_frame(const unsigned char * buf, int *cnt)
+static u_char *
+gps_frame(const u_char * buf, int *cnt)
 {
 	int sum = 0;
 	int ix = 0;
-	unsigned char *work = malloc(2 * *cnt + 10);
+	u_char *work = malloc(2 * *cnt + 10);
 
 	if (! work) {
-		warn("gps_frame: no memory");
+		warn(__func__ ": no memory");
 		return 0;
 	}
 
@@ -45,7 +45,7 @@ gps_frame(const unsigned char * buf, int *cnt)
 	*cnt -= 1;
 
 	/* data length, escape if len == dle.  Add len to checksum */
-	work[ix] = (unsigned char) *cnt;
+	work[ix] = (u_char) *cnt;
 	sum += work[ix];
 	if (work[ix++] == dle)
 		work[ix++] = dle;
@@ -60,7 +60,7 @@ gps_frame(const unsigned char * buf, int *cnt)
 	}
 
 	/* add the neg of the checksum. */
-	work[ix] = (unsigned char) (-sum);
+	work[ix] = (u_char) (-sum);
 	if (work[ix++] == dle)
 		work[ix++] = dle;
 
@@ -79,11 +79,11 @@ gps_frame(const unsigned char * buf, int *cnt)
  *	returns 1 if data sent and acknowledged, -1 if any errors occured.
  */
 int
-gps_send(gps_handle gps, const unsigned char *buf, int cnt)
+gps_send(gps_handle gps, const u_char *buf, int cnt)
 {
 	int ok = -1;
 	int len = cnt;
-	unsigned char *data = gps_frame(buf, &len);
+	u_char *data = gps_frame(buf, &len);
 
 	if (data) {
 		if (gps_debug(gps) >= 4)
@@ -99,9 +99,9 @@ gps_send(gps_handle gps, const unsigned char *buf, int cnt)
  * sent OK, othewise -1.
  */
 int
-gps_send_ack(gps_handle gps, unsigned char type)
+gps_send_ack(gps_handle gps, u_char type)
 {
-	unsigned char buf[4];
+	u_char buf[4];
 
 	buf[0] = ack;
 	buf[1] = type;
@@ -114,9 +114,9 @@ gps_send_ack(gps_handle gps, unsigned char type)
  * sent OK, othewise -1.
  */
 int
-gps_send_nak(gps_handle gps, unsigned char type)
+gps_send_nak(gps_handle gps, u_char type)
 {
-	unsigned char buf[4];
+	u_char buf[4];
 
 	buf[0] = nak;
 	buf[1] = type;
@@ -139,14 +139,14 @@ gps_send_nak(gps_handle gps, unsigned char type)
 #define READ_TO	10
 
 int
-gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
+gps_recv(gps_handle gps, int to, u_char *buf, int * cnt)
 {
 	int dle_seen;
 	int etx_seen;
 	int sum;
 	int len;
 	int rlen = -1;
-	unsigned char *ptr;
+	u_char *ptr;
 	int stat;
 
 	/* sync to the first DLE to come down the pike. */
@@ -162,10 +162,10 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 
 		switch (stat) {
 		case -1:
-			gps_printf(gps, 2, "sync error: gps recv\n");
+			gps_printf(gps, 2, __func__ ": sync error\n");
 			return -1;
 		case 0:
-			gps_printf(gps, 2, "timeout: gps recv\n");
+			gps_printf(gps, 2, __func__ ": timeout\n");
 			return 0;
 		case 1:
 			break;
@@ -184,7 +184,7 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 		do {
 			stat = gps_read(gps, ptr, READ_TO);
 			if (stat != 1) {
-				gps_printf(gps, 2, "frame error: gps recv\n");
+				gps_printf(gps, 2, __func__ ": frame error\n");
 				return -1;
 			}
 			if (dle_seen) {
@@ -220,7 +220,7 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 			   Add in the packet type to the expected length. */
 			rlen += 1;
 			if (rlen != len)
-				gps_printf(gps, 1, "bad frame len, "
+				gps_printf(gps, 1, __func__ ": bad frame len, "
 					   "%d expected, %d received\n",
 					   rlen, len);
 			if ((sum & 0xff) == 0) {
@@ -237,8 +237,8 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 			}
 		} else {
 			/* frame too large, return error */
-			gps_printf(gps, 1,
-				   "frame too large for %d byte buffer\n",
+			gps_printf(gps, 1, __func__
+				   ": frame too large for %d byte buffer\n",
 				   *cnt);
 			return -1;
 		}
@@ -250,14 +250,14 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
  * Return 1 if all ok, -1 if frame can not be sent/is not acknowledged.
  */
 int
-gps_send_wait(gps_handle gps, const unsigned char * buf, int cnt)
+gps_send_wait(gps_handle gps, const u_char *buf, int cnt)
 {
 	int retry = 5;
 	int ok = -1;
 	int len = cnt;
-	unsigned char *data = gps_frame(buf, &len);
-	unsigned char *response = malloc(GPS_FRAME_MAX);
 	int resplen;
+	u_char *data = gps_frame(buf, &len);
+	u_char *response = malloc(GPS_FRAME_MAX);
 
 	if (data && response) {
 		if (gps_debug(gps) >= 4)
@@ -273,7 +273,7 @@ gps_send_wait(gps_handle gps, const unsigned char * buf, int cnt)
 						break;
 					}
 				}
-				gps_printf(gps, 2, "retry: send and wait\n");
+				gps_printf(gps, 2, __func__ ": retry\n");
 			}
 		}
 	}

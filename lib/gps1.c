@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps1.c,v 1.13 2003/04/11 01:21:49 marc Exp $
+ *	$snafu: gps1.c,v 1.14 2003/04/11 23:46:53 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -45,7 +45,7 @@ struct gps_state {
 #endif
 	int		bufix;		/* index into read buffer */
 	int		bufcnt;		/* number of bytes in read buffer */
-	unsigned char	buf[GPS_BUF_LEN];
+	u_char		buf[GPS_BUF_LEN];
 	int		wpt_type;	/* waypoint packet type */
 	int		rte_hdr_type;	/* route header type */
 	int		rte_wpt_type;	/* route waypoint type */
@@ -183,7 +183,7 @@ gps_debug(gps_handle gps)
  * return timeout.
  */
 int
-gps_read(gps_handle gps, unsigned char * val, int timeout)
+gps_read(gps_handle gps, u_char * val, int timeout)
 {
 	if (gps == &gps_state) {
 		if (gps_state.bufix >= gps_state.bufcnt) {
@@ -240,7 +240,7 @@ gps_read(gps_handle gps, unsigned char * val, int timeout)
  * handle and return the write status.
  */
 int
-gps_write(gps_handle gps, const unsigned char * buf, int cnt)
+gps_write(gps_handle gps, const u_char * buf, int cnt)
 {
 	int written;
 

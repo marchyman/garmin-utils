@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsload.c,v 1.9 2003/04/11 21:17:15 marc Exp $
+ *	$snafu: gpsload.c,v 1.10 2003/04/11 23:46:53 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -23,12 +23,12 @@
 static int
 start_load(gps_handle gps, int records)
 {
-	unsigned char buf[4];
+	u_char buf[4];
 
-	gps_printf(gps, 3, "start: load\n");
+	gps_printf(gps, 3, __func__ ": send\n");
 	buf[0] = p_xfr_begin;
-	buf[1] = (unsigned char) records;
-	buf[2] = (unsigned char) (records >> 8);
+	buf[1] = (u_char) records;
+	buf[2] = (u_char) (records >> 8);
 	return gps_send_wait(gps, buf, 3);
 }
 
@@ -46,23 +46,23 @@ do_load(gps_handle gps, struct gps_list_entry *entry)
 static int
 end_load(gps_handle gps, int type)
 {
-	unsigned char buf[4];
+	u_char buf[4];
 
-	gps_printf(gps, 3, "end: load\n");
+	gps_printf(gps, 3, __func__ ": send\n");
 	buf[0] = p_xfr_end;
-	buf[1] = (unsigned char) type;
-	buf[2] = (unsigned char) (type >> 8);
+	buf[1] = (u_char) type;
+	buf[2] = (u_char) (type >> 8);
 	return gps_send_wait(gps, buf, 3);
 }
 
 static int
 cancel_load(gps_handle gps)
 {
-	unsigned char buf[4];
+	u_char buf[4];
 
-	gps_printf(gps, 3, "fail: load\n");
+	gps_printf(gps, 3, __func__ ": send\n");
 	buf[0] = p_xfr_end;
-	buf[1] = (unsigned char) CMD_ABORT_XFR;
+	buf[1] = (u_char) CMD_ABORT_XFR;
 	buf[2] = 0;
 	return gps_send_wait(gps, buf, 3);
 }

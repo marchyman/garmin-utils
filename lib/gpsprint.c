@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.17 2003/04/11 20:28:46 marc Exp $
+ *	$snafu: gpsprint.c,v 1.18 2003/04/11 23:46:53 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -33,7 +33,7 @@
  * from a gps unit convert it to a double.
  */
 static double
-semicircle2double(const unsigned char * s)
+semicircle2double(const u_char * s)
 {
 	long work = s[0] + (s[1] << 8) + (s[2] << 16) + (s[3] << 24);
 	return work * 180.0 / (double) (0x80000000);
@@ -47,7 +47,7 @@ semicircle2double(const unsigned char * s)
  * VAX F floating point data type.
  */
 static float
-get_float(const unsigned char * s)
+get_float(const u_char * s)
 {
 	float ret;
 	u_int8_t buf[4], p[4];
@@ -102,7 +102,7 @@ out:
 #elif BYTE_ORDER == LITTLE_ENDIAN
 
 static float
-get_float(const unsigned char * s)
+get_float(const u_char * s)
 {
 	float f;
 
@@ -113,10 +113,10 @@ get_float(const unsigned char * s)
 #elif BYTE_ORDER == BIG_ENDIAN
 
 static float
-get_float(const unsigned char * s)
+get_float(const u_char * s)
 {
 	float f;
-	unsigned char t[4];
+	u_char t[4];
 
 	t[0] = s[3];
 	t[1] = s[2];
@@ -134,7 +134,7 @@ get_float(const unsigned char * s)
  * Grab a string from a buffer given its offset and length.
  */
 static char *
-get_string(const unsigned char *buf, int bufsiz, u_short off, u_short len)
+get_string(const u_char *buf, int bufsiz, u_short off, u_short len)
 {
 	char *str = NULL;
 
@@ -151,7 +151,7 @@ get_string(const unsigned char *buf, int bufsiz, u_short off, u_short len)
  * length.
  */
 static long
-get_int(const unsigned char *buf, int bufsiz, u_short off, u_short len)
+get_int(const u_char *buf, int bufsiz, u_short off, u_short len)
 {
 	int val = -1;
 
@@ -208,7 +208,7 @@ find_wpt_info(int type)
 }
 
 static void
-print_waypoint(const unsigned char *wpt, int len, int type)
+print_waypoint(const u_char *wpt, int len, int type)
 {
 	struct wpt_info *wi;
 	double lat;
@@ -267,7 +267,7 @@ find_rte_info(int type)
 }
 
 static void
-print_route(const unsigned char *rte, int len, int type)
+print_route(const u_char *rte, int len, int type)
 {
 	struct rte_info *ri;
 	long num;
@@ -376,7 +376,7 @@ print_track(const u_char *trk, int len, int type)
 }
 
 static void
-print_time(const unsigned char *utc, int len)
+print_time(const u_char *utc, int len)
 {
 	int month = utc [1];
 	int day   = utc [2];
@@ -390,7 +390,7 @@ print_time(const unsigned char *utc, int len)
 }
 
 int
-gps_print(gps_handle gps, enum gps_cmd_id cmd, const unsigned char *packet,
+gps_print(gps_handle gps, enum gps_cmd_id cmd, const u_char *packet,
 	  int len) 
 {
 	static int count;
@@ -404,10 +404,10 @@ gps_print(gps_handle gps, enum gps_cmd_id cmd, const unsigned char *packet,
 		case p_xfr_begin:
 			count = 0;
 			limit = get_int(packet, len, 1, 2);
-			printf("[%s, %d records]\n",
-			       cmd == CMD_RTE ? "routes" :
-			       cmd == CMD_TRK ? "tracks" :
-			       cmd == CMD_WPT ? "waypoints" : "unknown",
+			printf("%s, %d records]\n",
+			       cmd == CMD_RTE ? RTE_HDR :
+			       cmd == CMD_TRK ? TRK_HDR :
+			       cmd == CMD_WPT ? WPT_HDR : "unknown",
 			       limit);
 			break;
 		case p_wpt_data:

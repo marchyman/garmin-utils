@@ -1,4 +1,4 @@
-# $snafu: Makefile.inc,v 1.12 2002/09/10 00:18:42 marc Exp $
+# $snafu: Makefile.inc,v 1.13 2003/04/11 23:46:53 marc Exp $
 #
 # Default installation directories
 #
@@ -8,11 +8,11 @@ MANDIR?=	${PREFIX}/man/cat
 
 # Name the default serial port to talk to the gps
 #
-SERIAL_PORT?=	-DDEFAULT_PORT=\"/dev/gps\"
+SERIAL_PORT?=	-DDEFAULT_PORT=\"/dev/tty00\"
 
 # Program version
 #
-VERSION?=	-DVERSION=\"1.8\"
+VERSION?=	-DVERSION=\"1.9\"
 
 # Which serial I/O code to use, possible choices are
 #   BSD	   for BSD-based systems

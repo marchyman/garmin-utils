@@ -1,12 +1,11 @@
 /*
- *	$snafu: gpsdump.c,v 1.7 2003/04/11 01:21:49 marc Exp $
+ *	$snafu: gpsdump.c,v 1.8 2003/04/11 23:46:53 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <err.h>
 
 #include "gpslib.h"
 
@@ -28,13 +27,12 @@
 int
 gps_cmd(gps_handle gps, enum gps_cmd_id cmd)
 {
-	unsigned char cmd_frame[4];
+	u_char cmd_frame[4];
 	int retries = 5;
-	unsigned char *data = malloc(GPS_FRAME_MAX);
+	u_char *data = malloc(GPS_FRAME_MAX);
 
 	if (data == NULL) {
-		if (gps_debug(gps))
-			warnx("no memory: gps command");
+		gps_printf(gps, 0, __func__ ": no memory\n");
 		return -1;
 	}
 
@@ -42,8 +40,7 @@ gps_cmd(gps_handle gps, enum gps_cmd_id cmd)
 	cmd_frame[1] = cmd;
 	cmd_frame[2] = 0;
 	
-	if (gps_debug(gps) > 2)
-		warnx("send: gps command %d", cmd);
+	gps_printf(gps, 3, __func__ ": send command %d\n", cmd);
 
 	while (retries--) {
 		if (gps_send_wait(gps, cmd_frame, 3) == 1) {
@@ -68,11 +65,9 @@ gps_cmd(gps_handle gps, enum gps_cmd_id cmd)
 			free(data);
 			return 1;
 		}
-		if (gps_debug(gps) > 2)
-			warnx("retry: gps command");
+		gps_printf(gps, 3, __func__ ": retry\n");
 	}
-	if (gps_debug(gps))
-		warnx("fail: gps_cmd");
+	gps_printf(gps, 1, __func__ ": failed");
 	free(data);
 	return -1;
 }

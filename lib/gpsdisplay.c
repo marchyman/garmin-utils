@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsdisplay.c,v 1.8 2003/04/11 20:28:45 marc Exp $
+ *	$snafu: gpsdisplay.c,v 1.9 2003/04/11 23:46:53 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -40,17 +40,17 @@ gps_printf(gps_handle gps, int level, const char *fmt, ...)
  * sent, but any character can be used.
  */
 void
-gps_display(char direction, const unsigned char * buf, int len)
+gps_display(char direction, const u_char *buf, int len)
 {
-	unsigned char	data[DUMP_BUFLEN];
+	u_char	data[DUMP_BUFLEN];
 	int		start;
 
 	start = 0;
 	memset(data, ' ', DUMP_BUFLEN);
 	while (len) {
-		const unsigned char *d;
-		unsigned char *h;
-		unsigned char *a;
+		const u_char *d;
+		u_char *h;
+		u_char *a;
 		int cnt;
 		int sent;
 

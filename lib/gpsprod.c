@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprod.c,v 1.5 2003/04/10 20:50:22 marc Exp $
+ *	$snafu: gpsprod.c,v 1.6 2003/04/11 23:46:53 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 
 #include "gpslib.h"
 
@@ -34,16 +33,14 @@ gps_product(gps_handle gps, int *product_id, int *software_version,
 {
 	char rqst = p_prod_rqst;
 	int retries = 5;
-	unsigned char *data = malloc(GPS_FRAME_MAX);
+	u_char *data = malloc(GPS_FRAME_MAX);
 
 	if (! data) {
-		if (gps_debug(gps))
-			warnx("no memory: product request");
+		gps_printf(gps, 0, __func__ ": no memory\n");
 		return -1;
 	}
 
-	if (gps_debug(gps) > 2)
-		warnx("send: product request");
+	gps_printf(gps, 3, __func__ ": send\n");
 
 	while (retries--) {
 		if (gps_send_wait(gps, &rqst, 1) == 1) {
@@ -59,19 +56,17 @@ gps_product(gps_handle gps, int *product_id, int *software_version,
 							strdup(&data[5]);
 					else
 						*product_description = 0;
-					if (gps_debug(gps) > 2)
-						warnx("rcvd: product data");
+					gps_printf(gps, 3, __func__
+						   ": rcvd\n");
 					free(data);
 					return 0;
 				}
 			}
 			gps_send_nak(gps, *data);
-			if (gps_debug(gps) > 2)
-				warnx("retry: product request");
+			gps_printf(gps, 3, __func__ ": retry\n");
 		}
 	}
-	if (gps_debug(gps))
-		warnx("fail: product request");
+	gps_printf(gps, 1, __func__ ": fail\n");
 	free(data);
 	return -1;
 }

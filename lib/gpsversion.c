@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsversion.c,v 1.6 2003/04/11 20:28:46 marc Exp $
+ *	$snafu: gpsversion.c,v 1.7 2003/04/11 23:46:53 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -26,7 +26,7 @@ gps_version(gps_handle gps)
 
 	if (gps_product(gps, &product_id, &software_version,
 			&product_description)) {
-		gps_printf(gps, 1, "can't get gps version info\n");
+		gps_printf(gps, 1, __func__ ": failed\n");
 		return -1;
 	}
 	printf("[product %d, version %d: %s]\n", product_id, software_version,
