@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsdump.c,v 1.3 2001/06/13 22:21:27 marc Exp $
+ *	$snafu: gpsdump.c,v 1.4 2001/06/19 04:36:47 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -58,7 +58,7 @@ gpsCmd( GpsHandle gps, GpsCmdId cmd )
 	    while ( gpsRecv( gps, 2, data, &dataLen ) == 1 ) {
 		gpsSendAck( gps, *data );
 		gpsPrint( gps, cmd, data, dataLen );
-		if ( *data == xfrEnd ) {
+		if ( *data == xfrEnd || *data == utcData ) {
 		    break;
 		}
 		dataLen = GPS_FRAME_MAX;

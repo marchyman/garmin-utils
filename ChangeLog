@@ -1,3 +1,56 @@
+Mon Jun 18 21:18:19 2001  Marco S Hyman  <marc@snafu.org>
+
+	MAJORITY OF CHANGES FROM Grisha Pupkov <pupkov@mccme.ru>
+	
+	* NEWS: New file describing changes.
+
+	* fixtrack.pl: removed
+
+	* fixtrack: updated version of fixtrack.
+
+	* GNUmakefile.inc: SIO_TYPE now specified as BSD or Linux, not
+	0 or 1.  GPS flag no longer needed (GPS type selection is now
+	handled at run time).   Version bumped.  -O3 opt.
+
+	* Makefile.inc: IO_TYPE now specified as BSD or Linux, not
+	0 or 1.  GPS flag no longer needed (GPS type selection is now
+	handled at run time).   Version bumped.  -O3 opt.
+
+	* README: Comments regarding the need to select GPS type
+	removed.
+
+	* gardump/gardump.1: describe the -u option.  Standardize
+	option ordering.
+
+	* gardump/gardump.c: add -u processing.
+
+	* garload/garload.c: usage string now matches man page.
+
+	* lib/gps1.c: SIO_TYPE flag changes.  Waypoint type added
+	to gpsState structure.  Waypoint type access and modification
+	functions added.
+
+	* lib/gps1.h: declare gpsSetWptType and gpsGetWptType.
+
+	* lib/gpscap.c: decode the waypoint data format from the
+	protocol capability packet so we can figure out what type
+	of garmin unit we're talking too.
+
+	* lib/gpsdisplay.c: Change the format of the debug output from
+	hex/ascii to decimal/ascii.   [Marc says: I don't like this change
+	but I'm not the one using the debug code these days :-]
+
+	* lib/gpsdump.c: handle utcData.
+
+	* lib/gpsformat.c: Handle the various waypoint formats dynamically
+	at run time.
+
+	* lib/gpsprint.c: Describe the waypoint type formats.  printWaypoint
+	is now given the waypoint type and prints the data accordingly.
+	(printTime): prints the GPS time in UTC format.
+
+	* lib/gpsproto.h: define UTC command and waypoint packet types.
+
 Tue Jun 12 10:24:49 2001  Marco S Hyman  <marc@snafu.org>
 
 	* lib/gpsload.c (startLoad): shift to get the high order byte,

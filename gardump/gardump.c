@@ -1,5 +1,5 @@
 /*
- *	$snafu: gardump.c,v 1.6 2001/06/13 22:21:26 marc Exp $
+ *	$snafu: gardump.c,v 1.7 2001/06/19 04:36:35 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -33,7 +33,7 @@ usage( const char* prog, const char* err, ... )
 	vfprintf( stderr, err, ap);
 	va_end( ap );
     }
-    fprintf( stderr, "usage: %s [-d debug-level] [-vwrt] [-p port]\n", prog );
+    fprintf( stderr, "usage: %s [-vwrtu] [-d debug-level] [-p port]\n", prog );
     exit( 1 );
 }
 
@@ -43,6 +43,7 @@ main( int argc, char * argv[] )
     int waypoints = 0;
     int routes = 0;
     int tracks = 0;
+    int utc = 0;
     int debug = 0;
     const char* port = DEFAULT_PORT;
 
@@ -50,7 +51,7 @@ main( int argc, char * argv[] )
     char* rem;
     GpsHandle gps;
 
-    while (( opt = getopt( argc, argv, "d:vwrtp:" )) != -1 ) {
+    while (( opt = getopt( argc, argv, "d:vwrtup:" )) != -1 ) {
 	switch ( opt ) {
 	  case 'd':
 	    debug = strtol( optarg, &rem, 0 );
@@ -86,6 +87,12 @@ main( int argc, char * argv[] )
 	    }
 	    tracks = 1;
 	    break;
+	  case 'u':
+	    utc = 1;
+	    if ( debug > 1 ) {
+		warnx( "UTC timestamp requested" );
+	    }
+	    break;
 	  case 'p':
 	    port = strdup( optarg );
 	    if ( debug > 1 ) {
@@ -104,10 +111,10 @@ main( int argc, char * argv[] )
 	/* does not return */
     }
 
-    if (( ! waypoints ) && ( ! routes ) && ( ! tracks )) {
-	waypoints = routes = tracks = 1;
+    if (( ! waypoints ) && ( ! routes ) && ( ! tracks ) && ( ! utc )) {
+	waypoints = routes = tracks = utc = 1;
 	if ( debug > 1 ) {
-	    warnx( "waypoint, route, and track dump requested" );
+	    warnx( "full dump requested" );
 	}
     }
 
@@ -115,6 +122,9 @@ main( int argc, char * argv[] )
     if ( gpsVersion( gps ) != 1 ) {
 	errx( 1, "can't communicate with GPS unit" );
 	/* does not return */
+    }
+    if ( utc ) {
+	gpsCmd( gps, CMD_UTC );
     }
     if ( waypoints ) {
 	gpsCmd( gps, CMD_WPT );

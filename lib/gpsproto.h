@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsproto.h,v 1.5 2001/06/13 22:21:27 marc Exp $
+ *	$snafu: gpsproto.h,v 1.6 2001/06/19 04:36:47 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -19,6 +19,7 @@
 #define ack		6
 #define cmdType		10
 #define xfrEnd		12
+#define utcData		14
 #define dle		16
 #define nak		21
 #define xfrBegin	27
@@ -47,7 +48,19 @@
 typedef enum {
     CMD_ABORT_XFR = 0,
     CMD_RTE = 4,
+    CMD_UTC = 5,
     CMD_TRK = 6,
     CMD_WPT = 7
 } GpsCmdId;
 
+    /*
+     * Several GPS protocols
+     */
+#define	A100		100	/* waypoint transfer protocol */
+
+    /*
+     * Known GPS waypoint packet types
+     */
+#define D100		100
+#define D103		103
+#define D104		104

@@ -1,4 +1,4 @@
-.\"	$snafu: gardump.1,v 1.5 2001/06/13 22:21:26 marc Exp $
+.\"	$snafu: gardump.1,v 1.6 2001/06/19 04:36:35 marc Exp $
 .\"
 .\"	Copyright (c) 1998, 1999 Marco S. Hyman
 .\"
@@ -18,8 +18,8 @@
 .Nd dump waypoints, routes, and tracks from a Garmin GPS unit
 .Sh SYNOPSIS
 .Nm
+.Op Fl vwrtu
 .Op Fl d Ar debug-level
-.Op Fl vwrt
 .Op Fl p Ar port
 .Sh DESCRIPTION
 .Nm
@@ -33,6 +33,18 @@ program.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl v
+Display the software version on stderr and exit with a return code of 1.
+.It Fl w
+Retrieve waypoints and write them to stdout.
+.It Fl r
+Retrieve routes and write them to stdout.
+.It Fl t
+Retrieve the track log and write it to stdout.
+.It Fl u
+Retrieve the 
+.Tn UTC
+timesamp.
 .It Fl d Ar debug-level
 Enable various levels of debugging output.  Without this option
 debugging is disabled and only critical errors are written to
@@ -51,19 +63,13 @@ layer 2 protocol machine.  Data is written to stdout.
 Perform a hex dump of all data read from/written to the GPS
 unit.
 .El
-.It Fl v
-Display the software version on stderr and exit with a return code of 1.
-.It Fl w
-Retrieve waypoints and write them to stdout.
-.It Fl r
-Retrieve routes and write them to stdout.
-.It Fl t
-Retrieve the track log and write it to stdout.
 .It Fl p Ar port
 Use
 .Ar port
 as the device connected to the GPS unit.  The default port is a
-compile time option.
+compile time option that is typically set to
+.Pa /dev/gps ,
+which can be a symbolic link to the actual port used.
 .El
 .Pp
 If no options are given

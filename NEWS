@@ -1,0 +1,25 @@
+List of changes/additions (for 1.5).  See ChangeLog for more details.
+
+- bug (in fact, two of them) in lib/gpsload.c was fixed
+
+- support for D100/D103/D104 waypoint packets in gpsprint.c and
+  gpsformat.c was added
+
+- capabilities packet processed now in gpscap.c; extra field
+  to GpsState and two extra functions to gps1.c were added; -DGPS
+  key is no more needed, it was removed from all makefiles
+
+- dump format was changed from hex to decimal, to be more close to
+  Garmin's protocol descriptions - gpsdump.c
+
+- -u key was added to gpsdump, it will print current time from
+  receiver (it's useful to store full dumps w\ date and time)
+
+- fixtrack script was updated; minor changes is makefiles
+
+Grigory
+
+Also: the copyright verbage has been changed to explicitly allow
+modification of the code.   Enjoy,
+
+// marc

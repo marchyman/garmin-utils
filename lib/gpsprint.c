@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.7 2001/06/13 22:21:27 marc Exp $
+ *	$snafu: gpsprint.c,v 1.8 2001/06/19 04:36:47 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <err.h>
 
 #include "gpsproto.h"
 #include "gps1.h"
@@ -41,7 +42,29 @@ semicircleToDouble( const unsigned char * s )
 
 
     /*
-     * Waypoint format is:
+     * D100 waypoint format is:
+     *   GPS 38/40/45 and GPS II
+     *   xxxxxx -99.999999 -999.999999 0/0 comments
+     *
+     *	 1	packet type
+     *	 6	name
+     *	 4	lat
+     *	 4	long
+     *	 4	unused
+     *	40	comment
+     *
+     *
+     * D103 waypoint format is:
+     *   GPS 12/12XL/48 and GPS II+
+     *
+     * ...
+     *	59	symbol
+     *	60	display option (0: sym + name, 1: symbol, 2: sym + comment)
+     *
+     *
+     * D104 waypoint format is:
+     *   GPS III/III+
+     *   xxxxxx -99.999999 -999.999999 sssss/d comments
      *
      *	 1	packet type
      *	 6	name
@@ -53,22 +76,9 @@ semicircleToDouble( const unsigned char * s )
      *	 2	symbol
      *	 1	display option (1: symbol, 3: sym + name, 5: sym + comment
      *
-     * printed as:
-     * xxxxxx -99.999999 -999.999999 sssss/d comments
-     *
-     *
-     * GPS 12/12XL waypoint format is:
-     *
-     * ...
-     *	59	symbol
-     *	60	display option (0: sym + name, 1: symbol, 2: sym + comment)
-     *
-     * printed as:
-     * xxxxxx -99.999999 -999.999999 ss/d comments
-     *
      */
 static void
-printWaypoint( const unsigned char * wpt, int len )
+printWaypoint( const unsigned char * wpt, int len, int wptType )
 {
     unsigned char name[ 8 ];
     unsigned char comment[ 44 ];
@@ -81,28 +91,35 @@ printWaypoint( const unsigned char * wpt, int len )
     name[ 6 ] = 0;
     memcpy( comment, &wpt[ 19 ], 40 );
     comment[ 40 ] = 0;
+ 
+    if (wptType == D100) {
+        printf( "%s %10f %11f 0/0 %s\n", name, lat, lon, comment);
+    } else if (wptType == D103) {
+        if ( len >= 60 ) {
+           sym = wpt[ 59 ];
+           if ( len >= 61 ) {
+               disp = wpt[ 60 ];
+           }
+        }
+        printf( "%s %10f %11f %2d/%1d %s\n", name, lat, lon,
+	        sym, disp, comment );
+    } else if (wptType == D104) {                                                                
+        memcpy( name, &wpt[ 1 ], 6 );
+        name[ 6 ] = 0;
+        memcpy( comment, &wpt[ 19 ], 40 );
+        comment[ 40 ] = 0;
 
-#if GPS == 0   /* GPS III */
-    if ( len >= 65 ) {
-	sym = wpt[ 63 ] + ( wpt[ 64 ] << 8 );
-	if ( len >= 66 ) {
-	    disp = wpt[ 65 ];
-	}
+        if ( len >= 65 ) {
+            sym = wpt[ 63 ] + ( wpt[ 64 ] << 8 );
+            if ( len >= 66 ) {
+                disp = wpt[ 65 ];
+            }
+        }
+        printf( "%s %10f %11f %5d/%d %s\n", name, lat, lon,
+	        sym, disp, comment );
+    } else {
+        warnx ("unknown waypoint packet type");
     }
-    printf( "%s %10f %11f %5d/%d %s\n", name, lat, lon,
-	    sym, disp, comment );
-#elif GPS == 1  /* GPS 12/12XL */
-    if ( len >= 60 ) {
-	sym = wpt[ 59 ];
-	if ( len >= 61 ) {
-	    disp = wpt[ 60 ];
-	}
-    }
-    printf( "%s %10f %11f %2d/%1d %s\n", name, lat, lon,
-	    sym, disp, comment );
-#else
-#error Unknown GPS value
-#endif
 }
 
     /*
@@ -161,6 +178,20 @@ printTrack( const unsigned char * trk, int len )
     printf( "%10f %11f %s%s\n", lat, lon, timestring, startstring );
 }
 
+static void
+printTime( const unsigned char * utc, int len )
+{
+    int month = utc [1];
+    int day   = utc [2];
+    int year  = utc [3] + (utc [4] << 8);
+    int hour  = utc [5] + (utc [6] << 8);
+    int min   = utc [7];
+    int sec   = utc [8];
+    
+    printf ("[UTC %4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d]\n", year, month, 
+            day, hour, min, sec);
+}
+
 int
 gpsPrint( GpsHandle gps, GpsCmdId cmd, const unsigned char * packet, int len )
 {
@@ -196,13 +227,16 @@ gpsPrint( GpsHandle gps, GpsCmdId cmd, const unsigned char * packet, int len )
 	    printRteHdr( packet, len );
 	    break;
 	  case rteWptData:
-	    printWaypoint( packet, len );
+	    printWaypoint( packet, len, gpsGetWptType( gps ) );
 	    break;
 	  case trkData:
 	    printTrack( packet, len );
 	    break;
 	  case wptData:
-	    printWaypoint( packet, len );
+	    printWaypoint( packet, len, gpsGetWptType( gps ) );
+	    break;
+	  case utcData:
+	    printTime( packet, len );
 	    break;
 	  default:
 	    printf( "[unknown protocol %d]\n", packet[ 0 ] );

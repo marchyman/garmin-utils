@@ -1,4 +1,4 @@
-$snafu: README,v 1.6 2001/06/13 22:21:26 marc Exp $
+$snafu: README,v 1.7 2001/06/19 04:36:46 marc Exp $
 
 GARMIN upload/download utilities for the Garmin GPS 12, 12XL, 48, III, and
 III+ units.  These compile/work on OpenBSD and Linux.  They may compile/work
@@ -21,14 +21,14 @@ in the Garmin GPS 12/12XL/48 devices. They hold the copyrights on their
 changes.
 
 The "Y2K fix" is to change the format of the timestamp in tracklogs
-from "yymmddhhmss" to "yyyy-mm-dd hh:mm:ss". A script, fixtrack.pl,
+from "yymmddhhmss" to "yyyy-mm-dd hh:mm:ss". A script, fixtrack,
 is included to transform existing track logs to the new format.
 
 To install (BSD):
 
  1) Look at Makefile.inc in this directory.  This is where install locations
-    and default serial port may be modified.  Linux/BSD selection as well
-    as GPS type may be modified here, too.
+    and default serial port may be modified.  Linux/BSD selection may be
+    modified here, too.
 
  2) make depend && make
     This generates libgarmin and the gardump and garload utilities
@@ -40,8 +40,8 @@ To install (BSD):
 To install (Linux)
 
  1) Edit GNUmakefile.inc in this directory.   This is where
-    install locations and the default serial port may be modified
-    Linux/BSD selection as well as GPS type may be modified here, too.
+    install locations and the default serial port may be modified.
+    Linux/BSD selection may be modified here, too.
 
  2) make
     This generates libgarmin and the gardump and garload utilities

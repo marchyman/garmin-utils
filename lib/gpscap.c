@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpscap.c,v 1.3 2001/06/13 22:21:26 marc Exp $
+ *	$snafu: gpscap.c,v 1.4 2001/06/19 04:36:47 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -26,6 +26,8 @@ gpsProtocolCap( GpsHandle gps )
     int retries = 5;
     unsigned char * data = malloc( GPS_FRAME_MAX );
     int dataLen;
+    int pntr;
+    int tag, val;
 
     if ( ! data ) {
 	if ( gpsDebug( gps ) ) {
@@ -44,6 +46,22 @@ gpsProtocolCap( GpsHandle gps )
 	    goto done;
 	  case 1:
 	    if ( data[ 0 ] == protoCap ) {
+                for (pntr = 1; pntr + 5 < dataLen; pntr += 3) {
+                    tag = data [pntr];
+                    val = data [pntr + 1] + (data [pntr + 2] << 8);
+                    if (tag == 'A' && val == A100) {
+                        pntr += 3;
+                        tag = data [pntr];
+                        val = data [pntr + 1] + (data [pntr + 2] << 8);
+                        if (tag == 'D') {
+                            gpsSetWptType (gps, val);
+                            if (gpsDebug (gps) > 1) {
+                                warnx ("waypoint packet type is %d", val);
+                            };
+                            break;
+                        };
+                    };
+                };
 		gpsSendAck( gps, *data );
 		free( data );
 		if ( gpsDebug( gps ) > 2 ) {

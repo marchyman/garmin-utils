@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.5 2001/06/13 22:21:27 marc Exp $
+ *	$snafu: gpsformat.c,v 1.6 2001/06/19 04:36:47 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -171,7 +171,8 @@ scanWaypoint( GpsHandle gps, unsigned char * buf, FormatState state )
     unsigned char * data;	/* gps data buffer */
     int len;			/* gps data len */
     int ix;			/* general use index */
-
+    int wptType;
+    
     /* break the input data up into its component fields */
     result = sscanf( buf, "%6c %lf %lf %d/%d %40c",
 		    name, &lat, &lon, &sym, &disp, comment );
@@ -188,6 +189,8 @@ scanWaypoint( GpsHandle gps, unsigned char * buf, FormatState state )
 	warnx( "waypoint %s", name );
     }
 
+    wptType = gpsGetWptType (gps);
+    
     /* byte 1: waypoint type */
     data = malloc( GPS_FRAME_MAX );
     assert( data );
@@ -221,32 +224,30 @@ scanWaypoint( GpsHandle gps, unsigned char * buf, FormatState state )
     addString( &data[ len ], comment, 40 );
     len += 40;
 
-#if GPS == 0   /* GPS III/III+ */
+    if (wptType == D100) {
+        /* do nothing */
+    } else if (wptType == D103) {
+        /* byte 60: symbol */
+        data[ len++ ] = (unsigned char) sym;
 
-    /* bytes 60-63: distance (uploaded as zero) */
-    data[ len++ ] = 0;
-    data[ len++ ] = 0;
-    data[ len++ ] = 0;
-    data[ len++ ] = 0;
+        /* byte 61: display option */
+        data[ len++ ] = (unsigned char) disp;
+    } else if (wptType == D104) {
+        /* bytes 60-63: distance (uploaded as zero) */
+        data[ len++ ] = 0;
+        data[ len++ ] = 0;
+        data[ len++ ] = 0;
+        data[ len++ ] = 0;
 
-    /* bytes 64-65: symbol */
-    data[ len++ ] = (unsigned char) sym;
-    data[ len++ ] = (unsigned char) (sym >> 8);
+        /* bytes 64-65: symbol */
+        data[ len++ ] = (unsigned char) sym;
+        data[ len++ ] = (unsigned char) (sym >> 8);
 
-    /* byte 66: display option */
-    data[ len++ ] = (unsigned char) disp;
-
-#elif GPS == 1 /* GPS 12/12XL */
-
-    /* byte 60: symbol */
-    data[ len++ ] = (unsigned char) sym;
-
-    /* byte 61: display option */
-    data[ len++ ] = (unsigned char) disp;
-
-#else
-#error Unknown GPS value
-#endif
+        /* byte 66: display option */
+        data[ len++ ] = (unsigned char) disp;
+    } else {
+        errx (1, "unsupported device");
+    }
 
     return buildListEntry( data, len );
 }

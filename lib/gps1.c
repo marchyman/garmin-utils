@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps1.c,v 1.7 2001/06/13 22:21:26 marc Exp $
+ *	$snafu: gps1.c,v 1.8 2001/06/19 04:36:47 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -42,9 +42,10 @@ typedef struct {
     int			debug;		/* debugging level (set at open) */
     int			fd;		/* fd of the open file */
     char*		name;		/* name of the device */
-#if SIO_TYPE == 0 /* BSD */
+    int			wptType;	/* waypoint packet type */
+#if SIO_TYPE == BSD
     struct termios	termios;	/* initial term settings */
-#elif SIO_TYPE == 1 /* Linux */
+#elif SIO_TYPE == Linux
     struct termio	termios;
 #else
 #error Unknown SIO_TYPE value
@@ -54,7 +55,7 @@ typedef struct {
     unsigned char	buf[ GPS_BUF_LEN ];
 } GpsState;
 
-static GpsState	gpsState = { 0, -1, 0, { 0 }, 0, 0 };
+static GpsState	gpsState = { 0, -1, 0, D100, { 0 }, 0, 0 };
 
 
     /*
@@ -65,9 +66,9 @@ static GpsState	gpsState = { 0, -1, 0, { 0 }, 0, 0 };
 GpsHandle
 gpsOpen( const char * port, int debug )
 {
-#if SIO_TYPE == 0 /* BSD */
+#if SIO_TYPE == BSD
     struct termios  termios;
-#elif SIO_TYPE == 1 /* Linux */
+#elif SIO_TYPE == Linux
     struct termio   termios;
 #else
 #error Unknown SIO_TYPE value
@@ -85,7 +86,7 @@ gpsOpen( const char * port, int debug )
 	/* does not return */
     }
 
-#if SIO_TYPE == 0 /* BSD */
+#if SIO_TYPE == BSD
     if ( ioctl( gpsState.fd, TIOCGETA, &termios) < 0 ) {
 	err( 1, "TIOCGETA" );
 	/* does not return */
@@ -104,7 +105,7 @@ gpsOpen( const char * port, int debug )
 	err( 1, "TIOCSETAF" );
 	/* does not return */
     }
-#elif SIO_TYPE == 1 /* Linux */
+#elif SIO_TYPE == Linux
     if ( ioctl( gpsState.fd, TCGETA, &termios) < 0 ) err( 1, "TCGETA" );
     /* save current terminal settings */
     memcpy( &gpsState.termios, &termios, sizeof gpsState.termios );
@@ -123,12 +124,12 @@ gpsClose( GpsHandle gps )
 {
     if ( gps == &gpsState ) {
 	if ( gpsState.fd != -1 ) {
-#if SIO_TYPE == 0 /* BSD */
+#if SIO_TYPE == BSD
 	    if ( ioctl( gpsState.fd, TIOCSETAF, &gpsState.termios ) < 0) {
 		err( 1, "TIOCSETAF" );
 		/* does not return */
 	    }
-#elif SIO_TYPE == 1 /* Linux */
+#elif SIO_TYPE == Linux
 	    if ( ioctl( gpsState.fd, TCSETAF, &gpsState.termios ) < 0) {
 		err( 1, "TCSETAF" );
 		/* does not return */
@@ -176,9 +177,9 @@ gpsRead( GpsHandle gps, unsigned char * val, int timeout )
 	if ( gpsState.bufIx >= gpsState.bufCnt ) {
 	    int stat;
 	    struct timeval  time;
-#if SIO_TYPE == 0 /* BSD */
+#if SIO_TYPE == BSD
 	    struct fd_set   readfds;
-#elif SIO_TYPE == 1 /* Linux */
+#elif SIO_TYPE == Linux
 	    fd_set   readfds;
 #else
 #error Unknown SIO_TYPE value
@@ -245,5 +246,18 @@ gpsWrite( GpsHandle gps, const unsigned char * buf, int cnt )
 	}
 	return 1;
     }
+    return -1;
+}
+
+void gpsSetWptType (GpsHandle gps, int wptType) {
+    if (gps == &gpsState) {
+        gpsState.wptType = wptType;
+    };
+}
+
+int gpsGetWptType (GpsHandle gps) {
+    if (gps == &gpsState) {
+        return gpsState.wptType;
+    };
     return -1;
 }

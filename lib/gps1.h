@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps1.h,v 1.3 2001/06/13 22:21:26 marc Exp $
+ *	$snafu: gps1.h,v 1.4 2001/06/19 04:36:47 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -54,4 +54,5 @@ int gpsRead( GpsHandle gps, unsigned char * val, int timeout );
      */
 int gpsWrite( GpsHandle gps, const unsigned char * buf, int cnt );
 
-
+void gpsSetWptType (GpsHandle gps, int wptType);
+int  gpsGetWptType (GpsHandle gps);

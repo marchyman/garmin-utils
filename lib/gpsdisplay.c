@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsdisplay.c,v 1.4 2001/06/13 22:21:26 marc Exp $
+ *	$snafu: gpsdisplay.c,v 1.5 2001/06/19 04:36:47 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -19,11 +19,11 @@
 #include "gpsdisplay.h"
 
     /*
-     * Function and variables to dump data to stderr in hex format
+     * Function and variables to dump data to stderr
      */
 #define DUMP_BUFLEN		80
-#define DUMP_HEX_OFF		4
-#define DUMP_ASCII_OFF		(DUMP_HEX_OFF + ( 16 * 3 ) + 4 )
+#define DUMP_DEC_OFF		4
+#define DUMP_ASCII_OFF		(DUMP_DEC_OFF + 44)
 
 void
 gpsDisplay( char direction, const unsigned char * buf, int len )
@@ -41,19 +41,19 @@ gpsDisplay( char direction, const unsigned char * buf, int len )
 	int			sent;
 
 	d = buf;
-	h = &data[ DUMP_HEX_OFF ];
+	h = &data[ DUMP_DEC_OFF ];
 	a = &data[ DUMP_ASCII_OFF ];
 	sent = 0;
 
-	if ( len > 16 ) {
-	    cnt = 16;
-	    len -= 16;
+	if ( len > 10 ) {
+	    cnt = 10;
+	    len -= 10;
 	} else {
 	    cnt = len;
 	    len = 0;
 	    memset( data, ' ', DUMP_BUFLEN );
 	}
-	buf += 16;
+	buf += 10;
 
 	data[ 1 ] = direction;
 	while ( cnt-- ) {
@@ -62,13 +62,15 @@ gpsDisplay( char direction, const unsigned char * buf, int len )
 	    } else {
 		*a++ = '.';
 	    }   
-	    *h++ = "0123456789abcdef"[ ( *d >> 4 ) & 0xf ];
-	    *h++ = "0123456789abcdef"[ *d++ & 0xf ];
+            *h++ = 48 + *d / 100;
+            *h++ = 48 + *d % 100 / 10;
+            *h++ = 48 + *d % 10;
 	    *h++ = ' ';
-	    if ( ++sent == 8 ) {
+	    if ( ++sent == 5 ) {
 		*a++ = ' ';
 		*h++ = ' ';
-	    }
+	    };
+	    d++;
 	}
 	*a = 0;
 	fprintf( stderr, "%s\n", data );

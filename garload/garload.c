@@ -1,5 +1,5 @@
 /*
- *	$snafu: garload.c,v 1.6 2001/06/13 22:21:26 marc Exp $
+ *	$snafu: garload.c,v 1.7 2001/06/19 04:36:46 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -33,7 +33,7 @@ usage( const char* prog, const char* err, ... )
 	vfprintf( stderr, err, ap);
 	va_end( ap );
     }
-    fprintf( stderr, "usage: %s [-d debug-level] [-v] [-p port]\n", prog );
+    fprintf( stderr, "usage: %s [-v] [-d debug-level] [-p port]\n", prog );
     exit( 1 );
 }
 
