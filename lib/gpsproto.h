@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsproto.h,v 1.7 2001/12/16 00:56:16 marc Exp $
+ *	$snafu: gpsproto.h,v 1.8 2002/09/10 00:18:43 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -19,6 +19,7 @@
 #define rteWptData	30
 #define trkData		34
 #define wptData		35
+#define trkHdr		99
 #define protoCap	253
 #define prodRqst	254
 #define prodResp	255
@@ -56,3 +57,4 @@ typedef enum {
 #define D100		100
 #define D103		103
 #define D104		104
+#define D108		108

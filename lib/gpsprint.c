@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.10 2001/12/16 00:56:16 marc Exp $
+ *	$snafu: gpsprint.c,v 1.11 2002/09/10 00:18:43 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -110,21 +110,19 @@ printWaypoint( const unsigned char * wpt, int len, int wptType )
         }
         printf( "%s %10f %11f %5d/%d %s\n", name, lat, lon,
 	        sym, disp, comment );
-#if 0
 	/* incomplete code from Stefan Cermak <cermak@emt.tugraz.at>
 	   for the etrex */
-	} else if (wptType == D108) {
-	    unsigned char offset_comment;
-	    double lat = semicircleToDouble( &wpt[ 25 ] );
-	    double lon = semicircleToDouble( &wpt[ 29 ] );
-	    sym= wpt[5];
-	    disp= wpt[3];
-	    offset_comment=49+strlen(&wpt[49])+1;
-	    printf( "%s %10f %11f %d/%d %s\n", &wpt[49], lat, lon, sym,
+    } else if (wptType == D108) {
+	unsigned char offset_comment;
+	double lat = semicircleToDouble( &wpt[ 25 ] );
+	double lon = semicircleToDouble( &wpt[ 29 ] );
+	sym= wpt[5];
+	disp= wpt[3];
+	offset_comment=49+strlen(&wpt[49])+1;
+	printf( "%s %10f %11f %d/%d %s\n", &wpt[49], lat, lon, sym,
 		    disp, &wpt[offset_comment] );
-#endif
     } else {
-        warnx ("unknown waypoint packet type");
+        warnx ("unknown waypoint packet type: %d", wptType);
     }
 }
 
@@ -198,6 +196,12 @@ printTime( const unsigned char * utc, int len )
             day, hour, min, sec);
 }
 
+static void
+printTrackHdr( const unsigned char * trk, int len )
+{
+	printf("Track: %s\n", trk + 3);
+}
+
 int
 gpsPrint( GpsHandle gps, GpsCmdId cmd, const unsigned char * packet, int len )
 {
@@ -243,6 +247,9 @@ gpsPrint( GpsHandle gps, GpsCmdId cmd, const unsigned char * packet, int len )
 	    break;
 	  case utcData:
 	    printTime( packet, len );
+	    break;
+	  case trkHdr:
+	    printTrackHdr( packet, len );
 	    break;
 	  default:
 	    printf( "[unknown protocol %d]\n", packet[ 0 ] );
