@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsprint.c,v 1.3 1998/08/28 20:40:28 marc Exp $
+ *	$Id: gpsprint.c,v 1.4 1999/07/13 23:12:39 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -53,7 +53,7 @@ semicircleToDouble( const unsigned char * s )
      *	 1	display option (1: symbol, 3: sym + name, 5: sym + comment
      *
      * printed as:
-     * xxxxxx -99.9999999999 -999.9999999999 sssss/d comments
+     * xxxxxx -99.999999 -999.999999 sssss/d comments
      */
 static void
 printWaypoint( const unsigned char * wpt, int len )
