@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.15 2003/04/11 02:53:13 marc Exp $
+ *	$snafu: gpsprint.c,v 1.16 2003/04/11 18:56:32 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -10,6 +10,7 @@
 
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -130,11 +131,43 @@ get_float(const unsigned char * s)
 #endif
 
 /*
+ * Grab a string from a buffer given its offset and length.
+ */
+static char *
+get_string(const unsigned char *buf, int bufsiz, u_short off, u_short len)
+{
+	char *str = NULL;
+
+	if (off != 0 && bufsiz >= off + len) {
+		str = malloc(len + 1);
+		if (str != NULL)
+			strlcpy(str, &buf[off], len + 1);
+	}
+	return str;
+}
+
+/*
+ * grab an integer from a little endian buffer given its offset and length.
+ */
+static int
+get_int(const unsigned char *buf, int bufsiz, u_short off, u_short len)
+{
+	int val = -1;
+
+	if (off != 0 && bufsiz >= off + len) {
+		do {
+			val <<= 8;
+			val += buf[off + --len];
+		} while (len);
+	}
+	return val;
+}
+
+/*
  * Table of offsets/lengths  for the various fields in each waypoint type
  * needed to print the waypoint.   An offset of 0 indicates that the field
- * does not exist in the given waypoint type.   A length of 0 indicates
- * the field is null terminated.   The packet type is at offset 0, so the
- * first character of the first field starts at offset 1.
+ * does not exist in the given waypoint type.   The packet type is at offset
+ * 0, thus the first character of the first field starts at offset 1.
  */
 struct wpt_info {
 	int	wpt_type;
@@ -146,8 +179,8 @@ struct wpt_info {
 	u_short	sym_len;
 	u_short	disp_off;
 	u_short	disp_len;
-	u_short	comment_off;
-	u_short	comment_len;
+	u_short	cmnt_off;
+	u_short	cmnt_len;
 };
 
 static struct wpt_info winfo[] = {
@@ -166,6 +199,7 @@ static struct wpt_info winfo[] = {
 static struct wpt_info *
 find_wpt_info(int type)
 {
+	int ix;
 	for (ix = 0; ix < sizeof winfo / sizeof winfo[0]; ix++)
 		if (winfo[ix].wpt_type == type)
 			return &winfo[ix];
@@ -175,150 +209,88 @@ find_wpt_info(int type)
 static void
 print_waypoint(const unsigned char *wpt, int len, int type)
 {
-	int ix;
+	struct wpt_info *wi;
 	double lat;
 	double lon;
 	char *name;
 	char *cmnt;
+	int sym;
+	int dsp;
 
-	for (ix = 0; ix < sizeof winfo / sizeof winfo[0]; ix++)
-		if (winfo[ix].wpt_type == type) {
-			lat = semicircle2double(wpt[winfo[ix].lat_off]);
-			lon = semicircle2double(wpt[winfo[ix].long_off]);
-			if (winfo[ix].name_off) {
-				name = malloc(winfo[ix].name_len + 1);
-				if (name != NULL)
-					strlcpy(name, &wpt[winfo[ix].name_off],
-						winfo[ix].name_len + 1);
-			} else
-				name = NULL;
+	wi = find_wpt_info(type);
+	if (wi != NULL) {
+		lat = semicircle2double(&wpt[wi->lat_off]);
+		lon = semicircle2double(&wpt[wi->long_off]);
+		name = get_string(wpt, len, wi->name_off, wi->name_len);
+		sym = get_int(wpt, len, wi->sym_off, wi->sym_len);
+		dsp = get_int(wpt, len, wi->disp_off, wi->disp_len);
+		cmnt = get_string(wpt, len, wi->cmnt_off, wi->cmnt_len);
+		printf("%s %10f %11f %5d/%d %s\n", name ? name : "", lat, lon,
+		       sym == -1 ? 0 : sym, dsp == -1 ? 0 : dsp,
+		       cmnt ? cmnt : "");
+		if (name)
+			free(name);
+		if (cmnt)
+			free(cmnt);
+	} else
+		warnx("unknown waypoint packet type: %d", type);
+}
 
-			;;;
-			break;
-		}
+/*
+ * Table of offsets and lengths for route related packets
+ */
+struct rte_info {
+	int	rte_type;
+	int	num_off;
+	u_short	cmnt_off;	/* or ident */
+	u_short	cmnt_len;
+	u_short	class_off;
+	u_short class_len;
+};
+
+static struct rte_info rinfo[] = {
+	{ D200, 1,  0,  0, 0, 0 },
+	{ D201, 1,  2, 20, 0, 0 },
+	{ D202, 0,  1, 51, 0, 0 },
+	{ D210, 0, 21, 51, 1, 2 }
+};
+
+static struct rte_info *
+find_rte_info(int type)
+{
+	int ix;
+	for (ix = 0; ix < sizeof rinfo / sizeof rinfo[0]; ix++)
+		if (rinfo[ix].rte_type == type)
+			return &rinfo[ix];
+	return NULL;
+}
+
+static void
+print_route(const unsigned char *rte, int len, int type)
+{
+	struct rte_info *ri;
+	int num;
+	int class;
+	char *id;
+
+	ri = find_rte_info(type);
+	if (ri != NULL) {
+		num = get_int(rte, len, ri->num_off, 1);
+		id = get_string(rte, len, ri->cmnt_off, ri->cmnt_len);
+		class = get_int(rte, len, ri->class_off, ri->class_len);
+		printf("**%d %s %s\n", num == -1 ? 0 : num, id ? id : "",
+		       class == -1 ? "" :
+		       class == 0 ? "line" :
+		       class == 1 ? "link" :
+		       class == 2 ? "net" :
+		       class == 3 ? "direct" :
+		       class == 255 ? "snap" : "(unknown class)");
+	} else
+		warnx("unknown route packet type: %d", type);
+		
+}
 
 #if 0
-    unsigned char name[8];
-    unsigned char comment[44];
-    double lat = semicircle2double(&wpt[7]);
-    double lon = semicircle2double(&wpt[11]);
-    int sym = 0;
-    int disp = 0;
-
-    memcpy(name, &wpt[1], 6);
-    name[6] = 0;
-    memcpy(comment, &wpt[19], 40);
-    comment[40] = 0;
- 
-    if (wptType == D100) {
-        printf("%s %10f %11f 0/0 %s\n", name, lat, lon, comment);
-    } else if (wptType == D103) {
-        if (len >= 60) {
-           sym = wpt[59];
-           if (len >= 61) {
-               disp = wpt[60];
-           }
-        }
-        printf("%s %10f %11f %2d/%1d %s\n", name, lat, lon,
-	        sym, disp, comment);
-    } else if (wptType == D104) {                                                                
-        memcpy(name, &wpt[1], 6);
-        name[6] = 0;
-        memcpy(comment, &wpt[19], 40);
-        comment[40] = 0;
-
-        if (len >= 65) {
-            sym = wpt[63] + (wpt[64] << 8);
-            if (len >= 66) {
-                disp = wpt[65];
-            }
-        }
-        printf("%s %10f %11f %5d/%d %s\n", name, lat, lon,
-	        sym, disp, comment);
-	/* incomplete code from Stefan Cermak <cermak@emt.tugraz.at>
-	   for the etrex */
-    } else if (wptType == D108) {
- 	unsigned char offset_comment;
- 	double lat = semicircle2double(&wpt[25]);
- 	double lon = semicircle2double(&wpt[29]);
- 	sym= wpt[5];
- 	disp= wpt[3];
- 	offset_comment=49+strlen(&wpt[49])+1;
- 	printf("%s %10f %11f %d/%d %s\n", &wpt[49], lat, lon, sym,
-  		    disp, &wpt[offset_comment]);
-    } else {
-        warnx ("unknown waypoint packet type: %d", wptType);
-    }
-#endif
-}
-
-    /*
-     * print a route header.  The format is:
-     *	 1	packet type
-     *	 1	route number
-     *	20	comment
-     *
-     * printed as:
-     * route=999 optional comments
-     */
-static void
-printRteHdr(const unsigned char * hdr, int len, int type)
-{
-    unsigned char comment[24];
-
-    switch (type) {
-    case D200:
-	printf("**%d\n", hdr[1]);
-	break;
-    case D201:
-	memcpy(comment, &hdr[2], 20);
-	comment[20] = 0;
-	printf("**%d %s\n", hdr[1], comment);
-	break;
-    case D202:
-	printf("**%s\n", &hdr[1]);
-	break;
-    default:
-	printf("unknown rte hdr: D%03d\n", type);
-    }
-}
-
-static void
-printRteLink(const unsigned char *lnk, int len)
-{
-	const char *linktype = NULL;
-
-	switch (lnk[1] | (lnk[2] << 8)) {
-	case 0:
-		linktype = "line";
-		break;
-	case 1:
-		linktype = "link";
-		break;
-	case 2:
-		linktype = "net";
-		break;
-	case 3:
-		linktype = "direct";
-		break;
-	case 0xff:
-		linktype = "snap";
-		break;
-	default:
-		linktype = NULL;
-		break;
-	}
-
-	printf(" link");
-	if (linktype == NULL)
-		printf(" 0x%x",  lnk[1] | (lnk[2] << 8));
-	else
-		printf(" %s", linktype);
-
-	if (lnk[21] != '\0')
-		printf(" %s", &lnk[21]);
-	printf("\n");
-}
 
     /*
      * print a track.  The format is:
@@ -374,80 +346,72 @@ printTrack(const unsigned char * trk, int len, int type)
 }
 
 static void
-printTime(const unsigned char * utc, int len)
-{
-    int month = utc [1];
-    int day   = utc [2];
-    int year  = utc [3] + (utc [4] << 8);
-    int hour  = utc [5] + (utc [6] << 8);
-    int min   = utc [7];
-    int sec   = utc [8];
-    
-    printf ("[UTC %4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d]\n", year, month, 
-            day, hour, min, sec);
-}
-
-static void
 printTrackHdr(const unsigned char * trk, int len)
 {
 	printf("Track: %s\n", trk + 3);
 }
 
-int
-gpsPrint(GpsHandle gps, GpsCmdId cmd, const unsigned char * packet, int len)
-{
-    const char * type;
-    static int count;
-    static int limit;
+#endif
 
-    if (packet[0] == xfrEnd) {
-	printf("[end transfer, %d/%d records]\n", count, limit);
-    } else {	
-	count += 1;
-	switch (packet[0]) {
-	  case xfrBegin:
-	    count = 0;
-	    limit = packet[1] + (packet[2] << 8);
-	    switch (cmd) {
-	      case CMD_RTE:
-		type = "routes";
-		break;
-	      case CMD_TRK:
-		type = "tracks";
-		break;
-	      case CMD_WPT:
-		type = "waypoints";
-		break;
-	      default:
-		type = "unknown";
-		break;
-	    }	    
-	    printf("[%s, %d records]\n", type, limit);
-	    break;
-	  case rteHdr:
-	    printRteHdr(packet, len, gpsGetRteRteHdr(gps));
-	    break;
-	  case rteWptData:
-	    printWaypoint(packet, len, gpsGetWptType(gps));
-	    break;
-	  case rteLink:
-	    printRteLink(packet, len);
-	    break;
-	  case trkData:
-	    printTrack(packet, len, gpsGetTrkTrkType(gps));
-	    break;
-	  case wptData:
-	    printWaypoint(packet, len, gpsGetWptType(gps));
-	    break;
-	  case utcData:
-	    printTime(packet, len);
-	    break;
-	  case trkHdr:
-	    printTrackHdr(packet, len);
-	    break;
-	  default:
-	    printf("[unknown protocol %d]\n", packet[0]);
+static void
+print_time(const unsigned char *utc, int len)
+{
+	int month = utc [1];
+	int day   = utc [2];
+	int year  = utc [3] + (utc [4] << 8);
+	int hour  = utc [5] + (utc [6] << 8);
+	int min   = utc [7];
+	int sec   = utc [8];
+    
+	printf("[UTC %4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d]\n", year, month, 
+		day, hour, min, sec);
+}
+
+int
+gps_print(gps_handle gps, enum gps_cmd_id cmd, const unsigned char *packet,
+	  int len) 
+{
+	static int count;
+	static int limit;
+
+	if (packet[0] == p_xfr_end)
+		printf("[end transfer, %d/%d records]\n", count, limit);
+	else {	
+		count += 1;
+		switch (packet[0]) {
+		case p_xfr_begin:
+			count = 0;
+			limit = get_int(packet, len, 1, 2);
+			printf("[%s, %d records]\n",
+			       cmd == CMD_RTE ? "routes" :
+			       cmd == CMD_TRK ? "tracks" :
+			       cmd == CMD_WPT ? "waypoints" : "unknown",
+			       limit);
+			break;
+		case p_wpt_data:
+			print_waypoint(packet, len, gps_get_wpt_type(gps));
+			break;
+		case p_rte_hdr:
+			print_route(packet, len, gps_get_rte_hdr_type(gps));
+			break;
+		case p_rte_wpt_data:
+			print_waypoint(packet, len, gps_get_rte_wpt_type(gps));
+			break;
+		case p_rte_link:
+			print_route(packet, len, gps_get_rte_lnk_type(gps));
+			break;
+		case p_trk_data:
+			/* printTrack(packet, len, gpsGetTrkTrkType(gps)); */
+			break;
+		case p_utc_data:
+			print_time(packet, len);
+			break;
+		case p_trk_hdr:
+			/* printTrackHdr(packet, len); */
+			break;
+		default:
+			printf("[unknown protocol %d]\n", packet[0]);
+		}
 	}
-    }
-    return 0;
+	return 0;
 }

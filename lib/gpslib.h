@@ -1,4 +1,4 @@
-/* $snafu: gpslib.h,v 1.3 2003/04/11 01:21:49 marc Exp $ */
+/* $snafu: gpslib.h,v 1.4 2003/04/11 18:56:32 marc Exp $ */
 /* PUBLIC DOMAIN April 2003 <marc@snafu.org> */
 
 /*
@@ -49,17 +49,25 @@ enum gps_cmd_id {
 };
 
 /*
- * Known GPS waypoint packet types
+ * Known GPS data packet types
  */
 #define D100		100
+#define D101		101
+#define D102		102
 #define D103		103
 #define D104		104
+#define D105		105
+#define D106		106
+#define D107		107
 #define D108		108
+#define D109		109
 #define D200		200
 #define D201		201
 #define D202		202
+#define D210		210
 #define D300		300
 #define D301		301
+#define D310		310
 
 /*
  * list of data/length
