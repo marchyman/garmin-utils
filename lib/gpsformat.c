@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.19 2003/04/17 23:35:18 marc Exp $
+ *	$snafu: gpsformat.c,v 1.20 2003/04/17 23:50:21 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -521,7 +521,6 @@ waypoints(gps_handle gps, u_char *buf, int state)
 	result = sscanf(buf, "%6c %lf %lf %*f %d/%d %40s",
 			name, &lat, &lon, &sym, &disp, comment);
 	if (result != 6) {
-		gps_printf(gps, 3, __func__ ": no alt format: %s\n", buf);
 		result = sscanf(buf, "%6c %lf %lf %d/%d %40s",
 				name, &lat, &lon, &sym, &disp, comment);
 		if (result != 6) {
@@ -531,9 +530,6 @@ waypoints(gps_handle gps, u_char *buf, int state)
 	}
 	name[6] = 0;
 	comment[40] = 0;
-	gps_printf(gps, 3, "wpt: %s %lf %lf %d/%d %s\n", name, lat, lon, sym,
-		   disp, comment);
-
 	/* Now figure out which waypoint format is being used and
 	   call the appropriate routine */
 

@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpscap.c,v 1.11 2003/04/13 18:01:16 marc Exp $
+ *	$snafu: gpscap.c,v 1.12 2003/04/17 23:50:21 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -31,11 +31,12 @@ gps_cap_parse(gps_handle gps, const u_char *data, int datalen)
 	int proto = 0;
 	int dix = 0;
 
+	gps_printf(gps, 3, __func__ ":\n");
 	if (data[0] == p_cap) {
 		for (ix = 1; ix + 2 < datalen; ix += 3) {
 			tag = data[ix];
 			val = data[ix + 1] + (data[ix + 2] << 8);
-			gps_printf(gps, 3, __func__ ": capability %c%03d\n",
+			gps_printf(gps, 3, "%s %c%03d", tag == 'A' ? "\n" : "",
 				   tag, val);
 			switch (tag) {
 			case 'A':

@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps2.c,v 1.13 2003/04/16 23:08:37 marc Exp $
+ *	$snafu: gps2.c,v 1.14 2003/04/17 23:50:21 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -277,8 +277,6 @@ gps_wait(gps_handle gps, u_char typ, int timeout)
 						result = 0;
 					break;
 				}
-			gps_printf(gps, 3, __func__ ": %d %d %d %d\n", resplen,
-				   response[0], response[1], result);
 		} while (result == -1 && retries--);
 
 	if (response)
