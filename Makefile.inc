@@ -1,10 +1,14 @@
-# $snafu: Makefile.inc,v 1.17 2003/06/14 23:45:28 marc Exp $
+# $snafu: Makefile.inc,v 1.18 2003/06/15 02:08:46 marc Exp $
 #
 # Default installation directories
 #
 PREFIX?=	/usr/local
 BINDIR?=	${PREFIX}/bin
+.if !empty(unix:M*OpenBSD.)
+MANDIR?=	${PREFIX}/man/cat
+.else
 MANDIR?=	${PREFIX}/man
+.endif
 
 # Name the default serial port to talk to the gps
 #
