@@ -1,0 +1,39 @@
+D109 Waypoint Type Quick Reference
+
+   typedef struct                      /*                                 size */
+       {
+       byte            dtyp;           /* data packet type (0x01 for D109)1    */
+       byte            wpt_class;      /* class                           1    */
+       byte            dspl_color;     /* display & color (see below)     1    */
+       byte            attr;           /* attributes (0x70 for D109)      1    */
+       Symbol_Type     smbl;           /* waypoint symbol                 2    */
+       byte            subclass[18];   /* subclass                        18   */
+       Semicircle_Type posn;           /* 32 bit semicircle               8    */
+       float           alt;            /* altitude in meters              4    */
+       float           dpth;           /* depth in meters                 4    */
+       float           dist;           /* proximity distance in meters    4    */
+       char            state[2];       /* state                           2    */
+       char            cc[2];          /* country code                    2    */
+       longword        ete;            /* outbound link ete in seconds    4    */
+   /*  char            ident[];           variable length string          1-51 */
+   /*  char            comment[];         waypoint user comment           1-51 */
+   /*  char            facility[];        facility name                   1-31 */
+   /*  char            city[];            city name                       1-25 */
+   /*  char            addr[];            address number                  1-51 */
+   /*  char            cross_road[];      intersecting road label         1-51 */
+       } D109_Wpt_Type;
+
+All fields are defined the same as D108 except as noted below.
+
+dtyp - Data packet type, must be 0x01 for D109.
+
+dsp_color - The 'dspl_color' member contains three fields; bits 0-4 specify
+the color, bits 5-6 specify the waypoint display attribute and bit 7 is unused
+and must be 0. Color values are as specified for D108 except that the default
+value is 0x1f. Display attribute values are as specified for D108.
+
+attr - Attribute. Must be 0x70 for D109.
+
+ete - Estimated time en route in seconds to next waypoint. Default value is
+0xffffffff.
+
