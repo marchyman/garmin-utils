@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsdump.c,v 1.9 2003/04/13 18:01:16 marc Exp $
+ *	$snafu: gpsdump.c,v 1.10 2003/04/14 07:16:21 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -45,7 +45,7 @@ gps_cmd(gps_handle gps, enum gps_cmd_id cmd)
 	gps_printf(gps, 3, __func__ ": send command %d\n", cmd);
 
 	while (retries--) {
-		if (gps_send_wait(gps, cmd_frame, 3) == 1) {
+		if (gps_send_wait(gps, cmd_frame, 3, 5) == 1) {
 
 			/* command accepted, init data packet length and
 			   kill any remaining retries */

@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsload.c,v 1.11 2003/04/13 18:01:17 marc Exp $
+ *	$snafu: gpsload.c,v 1.12 2003/04/14 07:16:21 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -31,14 +31,14 @@ start_load(gps_handle gps, int records)
 	buf[0] = p_xfr_begin;
 	buf[1] = (u_char) records;
 	buf[2] = (u_char) (records >> 8);
-	return gps_send_wait(gps, buf, 3);
+	return gps_send_wait(gps, buf, 3, 2);
 }
 
 static int
 do_load(gps_handle gps, struct gps_list_entry *entry)
 {
 	while (entry) {
-		if (gps_send_wait(gps, entry->data, entry->data_len) != 1)
+		if (gps_send_wait(gps, entry->data, entry->data_len, 2) != 1)
 			return -1;
 		entry = entry->next;
 	}
@@ -54,7 +54,7 @@ end_load(gps_handle gps, int type)
 	buf[0] = p_xfr_end;
 	buf[1] = (u_char) type;
 	buf[2] = (u_char) (type >> 8);
-	return gps_send_wait(gps, buf, 3);
+	return gps_send_wait(gps, buf, 3, 2);
 }
 
 static int
@@ -66,7 +66,7 @@ cancel_load(gps_handle gps)
 	buf[0] = p_xfr_end;
 	buf[1] = (u_char) CMD_ABORT_XFR;
 	buf[2] = 0;
-	return gps_send_wait(gps, buf, 3);
+	return gps_send_wait(gps, buf, 3, 5);
 }
 
 /*

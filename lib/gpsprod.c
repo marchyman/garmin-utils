@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprod.c,v 1.7 2003/04/13 18:01:17 marc Exp $
+ *	$snafu: gpsprod.c,v 1.8 2003/04/14 07:16:21 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -45,7 +45,7 @@ gps_product(gps_handle gps, int *product_id, int *software_version,
 	gps_printf(gps, 3, __func__ ": send\n");
 
 	while (retries--) {
-		if (gps_send_wait(gps, &rqst, 1) == 1) {
+		if (gps_send_wait(gps, &rqst, 1, 5) == 1) {
 			int datalen = GPS_FRAME_MAX;
 			if (gps_recv(gps, 5, data, &datalen) == 1) {
 				if (data[0] == p_prod_resp) {

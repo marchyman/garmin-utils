@@ -1,5 +1,5 @@
 /* -*- tab-width: 4; -*-
- * $snafu: gardump.c,v 1.12 2003/04/13 18:01:16 marc Exp $
+ * $snafu: gardump.c,v 1.13 2003/04/14 07:16:21 marc Exp $
  *
  * Placed in the Public Domain by Marco S. Hyman
  */
@@ -86,10 +86,10 @@ main(int argc, char * argv[])
 				waypoints = routes = tracks = utc = 1;
 
 		gps = gps_open(port, debug);
+		printf("[gardump version %s]\n", VERSION);
 		if (gps_version(gps) != 1)
 				errx(1, "can't communicate with GPS unit");
 				/* does not return */
-		printf("[gardump version %s]\n", VERSION);
 		if (utc)
 				gps_cmd(gps, CMD_UTC);
 		if (waypoints)

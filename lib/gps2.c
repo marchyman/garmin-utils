@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps2.c,v 1.10 2003/04/13 18:01:16 marc Exp $
+ *	$snafu: gps2.c,v 1.11 2003/04/14 07:16:21 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -248,41 +248,66 @@ gps_recv(gps_handle gps, int to, u_char *buf, int * cnt)
 }
 
 /*
- * send a frame and wait for an ack/nak.  If nak'd re-send the frame.
- * Return 1 if all ok, -1 if frame can not be sent/is not acknowledged.
+ * Wait for a response for a particular packet type, return
+ *	1 = ack
+ *	0 = nak
+ *	-1 = other
  */
 int
-gps_send_wait(gps_handle gps, const u_char *buf, int cnt)
+gps_wait(gps_handle gps, char packet, int timeout)
 {
-	int retry = 5;
+	u_char *response = malloc(GPS_FRAME_MAX);
+	int result = -1;
+	int retries = 5;
+	int resplen;
+
+	if (response)
+		do {
+			resplen = GPS_FRAME_MAX;
+			if (gps_recv(gps, timeout, response, &resplen) != 1)
+				break;
+			if (resplen > 2)
+				switch (response[0]) {
+				case ack:
+					if (response[1] == packet)
+					        result = 1;
+					break;
+				case nak:
+					if (response[1] == packet)
+						result = 0;
+					break;
+				}
+		} while (result == -1 && retries--);
+
+	if (response)
+		free(response);
+
+	return result;
+}
+
+/*
+ * send a frame and wait for an ack/nak.  If nak'd re-send the frame.
+ * Return 1 if all ok, -1 if frame can not be sent/is not acknowledged,
+ * or 0 if frame is always nak'd.
+ */
+int
+gps_send_wait(gps_handle gps, const u_char *buf, int cnt, int timeout)
+{
+	int retries = 5;
 	int ok = -1;
 	int len = cnt;
-	int resplen;
 	u_char *data = gps_frame(buf, &len);
-	u_char *response = malloc(GPS_FRAME_MAX);
 
-	if (data && response) {
+	if (data) {
 		if (gps_debug(gps) >= 4)
 			gps_display('}', buf, cnt);
-		while (retry--) {
-			if (gps_write(gps, data, len) == 1) {
-				resplen = GPS_FRAME_MAX;
-				if (gps_recv(gps, 2, response, &resplen) == 1) {
-					if ((resplen > 2) &&
-					    (response[0] == ack) &&
-					    (response[1] == *buf)) { 
-						ok = 1;
-						break;
-					}
-				}
-				gps_printf(gps, 2, __func__ ": retry\n");
-			}
-		}
+		do {
+			if (gps_write(gps, data, len) == 1)
+				ok = gps_wait(gps, *data, timeout);
+		} while (ok == 0 && retries--);
 	}
 	if (data)
 		free(data);
-	if (response)
-		free(response);
 
 	return ok;
 }

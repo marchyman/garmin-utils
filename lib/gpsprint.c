@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.20 2003/04/13 18:01:17 marc Exp $
+ *	$snafu: gpsprint.c,v 1.21 2003/04/14 07:16:21 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -101,6 +101,14 @@ out:
 
 #elif BYTE_ORDER == LITTLE_ENDIAN
 
+/*
+ * Magic value used by garmin to signify an "empty" float field.
+ */
+union {
+	u_int32_t u;
+	float f;
+} no_val = { 0x68045951 };
+
 static float
 get_float(const u_char * s)
 {
@@ -111,6 +119,14 @@ get_float(const u_char * s)
 }
 
 #elif BYTE_ORDER == BIG_ENDIAN
+
+/*
+ * Magic value used by garmin to signify an "empty" float field.
+ */
+static union {
+	u_int32_t u;
+	float f;
+} no_val = { 0x51590468 };
 
 static float
 get_float(const u_char * s)
@@ -131,14 +147,16 @@ get_float(const u_char * s)
 #endif
 
 /*
- * Grab a string from a buffer given its offset and length.
+ * Grab a string from a buffer given its offset and length.   Note,
+ * the only size requirement is that the offset start before the
+ * end of the buffer.
  */
 static char *
 get_string(const u_char *buf, int bufsiz, u_short off, u_short len)
 {
 	char *str = NULL;
 
-	if (off != 0 && bufsiz >= off + len) {
+	if (off != 0 && bufsiz > off) {
 		str = malloc(len + 1);
 		if (str != NULL)
 			strlcpy(str, &buf[off], len + 1);
@@ -195,8 +213,8 @@ static struct wpt_info winfo[] = {
 	{ D105,  1,  5, 0, 0,  9, 2,  0, 0, 11, 40 },
 	{ D106, 15, 19, 0, 0, 23, 2,  0, 0, 25, 40 },
 	{ D107,  7, 11, 1, 6, 59, 1, 60, 1, 19, 40 },
-	{ D108, 25, 29, 0, 0,  5, 2,  3, 1, 49, 40 },
-	{ D109, 25, 29, 0, 0,  5, 2,  0, 0, 53, 40 }
+	{ D108, 25, 29, 0, 0,  5, 2,  3, 1, 49, 51 },
+	{ D109, 25, 29, 0, 0,  5, 2,  0, 0, 53, 51 }
 };
 
 static struct wpt_info *
@@ -228,9 +246,9 @@ print_waypoint(const u_char *wpt, int len, int type)
 		sym = get_int(wpt, len, wi->sym_off, wi->sym_len);
 		dsp = get_int(wpt, len, wi->disp_off, wi->disp_len);
 		cmnt = get_string(wpt, len, wi->cmnt_off, wi->cmnt_len);
-		printf("%s %10f %11f %5ld/%ld %s\n", name ? name : "", lat, lon,
-		       sym == -1 ? 0 : sym, dsp == -1 ? 0 : dsp,
-		       cmnt ? cmnt : "");
+		printf("%s %10f %11f %5ld/%ld %s\n", name == NULL ? "-" : name,
+		       lat, lon, sym == -1 ? 0 : sym, dsp == -1 ? 0 : dsp,
+		       cmnt == NULL ? "" : cmnt);
 		if (name)
 			free(name);
 		if (cmnt)
@@ -281,13 +299,13 @@ print_route(const u_char *rte, int len, int type)
 		num = get_int(rte, len, ri->num_off, 1);
 		id = get_string(rte, len, ri->cmnt_off, ri->cmnt_len);
 		class = get_int(rte, len, ri->class_off, ri->class_len);
-		printf("**%ld %s %s\n", num == -1 ? 0 : num, id ? id : "",
+		printf("**%ld %s%s\n", num == -1 ? 0 : num, id ? id : "-",
 		       class == -1 ? "" :
-		       class == 0 ? "line" :
-		       class == 1 ? "link" :
-		       class == 2 ? "net" :
-		       class == 3 ? "direct" :
-		       class == 255 ? "snap" : "(unknown class)");
+		       class == 0 ? " line" :
+		       class == 1 ? " link" :
+		       class == 2 ? " net" :
+		       class == 3 ? " direct" :
+		       class == 255 ? " snap" : " (unknown class)");
 	} else
 		warnx("unknown route packet type: %d", type);
 }
@@ -328,10 +346,9 @@ find_trk_info(int type)
 /*
  * print a track header or entry.  New entry format:
  *
- *	date       time     lat      long      alt   depth new
- *	yyyy-mm-dd hh:mm:ss 99.99999 999.99999 99.99 99.99 [start]
+ *	date       time     lat      long      alt   new
+ *	yyyy-mm-dd hh:mm:ss 99.99999 999.99999 99.99 [start]
  */
-#define NO_VAL	1.0e25
 static void
 print_track(const u_char *trk, int len, int type)
 {
@@ -341,7 +358,6 @@ print_track(const u_char *trk, int len, int type)
 	float lat;
 	float lon;
 	float alt;
-	float depth;
 	time_t time;
 	long new;
 
@@ -364,18 +380,12 @@ print_track(const u_char *trk, int len, int type)
 			if (ti->alt_off)
 				alt = get_float(&trk[ti->alt_off]);
 			else
-				alt = NO_VAL;
-			if (ti->depth_off)
-				depth = get_float(&trk[ti->depth_off]);
-			else
-				depth = NO_VAL;
+				alt = no_val.f;
+			/* skip depth for now */
 			new = get_int(trk, len, ti->new_off, ti->new_len);
 			printf("%s %10f %11f", buf, lat, lon);
-			if (depth == NO_VAL) {
-				if (alt != NO_VAL)
-					printf(" %f", alt);
-			} else
-				printf(" %f %f", alt, depth);
+			if (alt != no_val.f)
+				printf(" %f", alt);
 			printf("%s\n", new ? " start" : "");
 		}
 	} else

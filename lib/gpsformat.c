@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.14 2003/04/13 18:01:16 marc Exp $
+ *	$snafu: gpsformat.c,v 1.15 2003/04/14 07:16:21 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -443,6 +443,7 @@ d109_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
 	len += 4;
 
 	/* byte 33-44: alt, depth, and proximity (uploaded as zero) */
+	/* ;;; this is wrong, upload as 081 089 004 105 */
 	memset(&data[len], 0, 12);
 	len += 12;
 
@@ -463,6 +464,14 @@ d109_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
 	if (++tlen > 51)
 		tlen = 51;
 	len += tlen;
+
+	/* Add null bytes for the empty fields comment, facility, city
+	   address, and cross road */
+	data[len++] = 0;	/* comment */
+	data[len++] = 0;	/* facility */
+	data[len++] = 0;	/* city */
+	data[len++] = 0;	/* address */
+	data[len++] = 0;	/* cross road */
 
 	return build_list_entry(data, len);
 }
