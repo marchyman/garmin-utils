@@ -1,6 +1,8 @@
-# $snafu: NEWS,v 1.8 2003/06/12 16:44:59 marc Exp $
+# $snafu: NEWS,v 1.9 2003/06/14 23:45:28 marc Exp $
 
 List of changes/additions (for 1.9x)
+
+ - NetBSDisms from Greg Troxel
 
  - cosmetic changes for release testing
 

@@ -1,14 +1,14 @@
-# $snafu: Makefile.inc,v 1.16 2003/06/12 16:44:59 marc Exp $
+# $snafu: Makefile.inc,v 1.17 2003/06/14 23:45:28 marc Exp $
 #
 # Default installation directories
 #
 PREFIX?=	/usr/local
 BINDIR?=	${PREFIX}/bin
-MANDIR?=	${PREFIX}/man/cat
+MANDIR?=	${PREFIX}/man
 
 # Name the default serial port to talk to the gps
 #
-SERIAL_PORT?=	-DDEFAULT_PORT=\"/dev/tty00\"
+GPS_SERIAL_PORT?=	/dev/tty00
 
 # Program version
 #
@@ -24,7 +24,7 @@ SIO_TYPE?=	-DSIO_TYPE=BSD
 #
 CFLAGS+= -g -I${.CURDIR}/../lib
 CFLAGS+= -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Werror
-CFLAGS+= ${SERIAL_PORT} ${VERSION} ${SIO_TYPE}
+CFLAGS+= -DDEFAULT_PORT=\"${GPS_SERIAL_PORT}\" ${VERSION} ${SIO_TYPE}
 
 # Figure out where the library lives for proper dependencies
 #

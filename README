@@ -1,4 +1,4 @@
-$snafu: README,v 1.12 2003/04/25 03:40:26 marc Exp $
+$snafu: README,v 1.13 2003/06/14 23:45:28 marc Exp $
 
 *****
 THE DATA FORMAT OF THIS VERSION IS INCOMPATIBLE WITH VERSIONS PRIOR TO 1.91.
@@ -11,9 +11,11 @@ GARMIN upload/download utilities for the Garmin GPS 12, 12XL, 48, III, and
 III+ units.  Starting with version 1.9 the eMap, eTrex, V and other modern
 units are supported.
 
-These utilities compile/work on OpenBSD and Linux.  They may compile/work
-on other *BSD based systems.  All original code is placed in the Public Domain
-by its author, Marco S Hyman.
+These utilities compile/work on OpenBSD, NetBSD 1.6.1/i386 and Linux.
+The code will not compile with egcs-2.91.66, such as found on NetBSD
+1.5.4_ALPHA.  They may compile/work on other *BSD based systems.  All
+original code is placed in the Public Domain by its author, Marco S
+Hyman.
 
 GNUmakefiles and Linux support was added by Vladislav Zavjalov,
 <sla@zav.mccme.ru>.  Grigory Pupkov, <pupkov@mccme.ru> added code
@@ -25,7 +27,8 @@ changes.
 To install (BSD):
 
  1) Look at Makefile.inc in this directory.  This is where install locations
-    and default serial port may be modified.  Linux/BSD selection may be
+    and default serial port may be modified.  Or, on BSD, set
+    GPS_SERIAL_PORT in /etc/mk.conf.  Linux/BSD selection may be
     modified here, too.
 
  2) make depend && make
