@@ -1,0 +1,28 @@
+Tue May  1 17:17:08 2001  Marco S Hyman  <marc@snafu.org>
+
+	* GNUmakefile, GNUmakefile.inc, lib/GNUmakefile,
+	gardump/GNUmakefile, and garload/GNUmakefile: GNU makefiles
+	for linux users, from sla@zav.mccme.ru
+
+	* lib/GarminIOSpec.pdf: I/O specification moved to lib directory.
+
+	* Makefile.inc (SERIAL_PORT): now defaults to /dev/gps
+	(OS): Defaults to BSD (Linux in GNUmakefile.inc).
+	(GPS): Defaults to III/III+ style
+	(COPTS): add OS and GPS variables.
+
+	* README: add notes about changes and Linux build instructions.
+
+	* fixtrack.pl: perl script to convert timestamps in existing
+	track logs to the new format.
+
+	* gps1.c: Add linux support; <sla@zav.mccme.ru>
+	Save starting terminal modes and restore when closing unit.
+
+	* gpsformat.c: Add 12/12XL support, change timestamp format
+	to include 4 digit year; <pupkov@mccme.ru>.
+
+	* gpsprint.c: 10/12XL support; <pupkov@mccme.ru>.  Change
+	lat/long disply to only use 6 decimals as that is as much
+	precesion available.
+
