@@ -1,4 +1,4 @@
-# $snafu: GNUmakefile,v 1.2 2003/04/25 00:36:29 marc Exp $
+# $snafu: GNUmakefile,v 1.3 2003/04/25 03:40:26 marc Exp $
 #
 include ../GNUmakefile.inc
 
@@ -20,3 +20,4 @@ gpsformat.o: gpsformat.c gpslib.h
 gpsload.o:   gpsload.c gpslib.h
 gpsprint.o:  gpsprint.c gpslib.h
 gpsprod.o:   gpsprod.c gpslib.h
+strlcpy.o: strlcpy.c
