@@ -1,5 +1,5 @@
 /*
- *	$Id: gps1.c,v 1.2 1998/05/14 01:38:40 marc Exp $
+ *	$Id: gps1.c,v 1.3 2000/06/27 22:45:49 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -41,12 +41,13 @@ typedef struct {
     int			debug;		/* debugging level (set at open) */
     int			fd;		/* fd of the open file */
     char*		name;		/* name of the device */
+    struct termios	termios;	/* initial term settings */
     int			bufIx;		/* index into read buffer */
     int			bufCnt;		/* number of bytes in read buffer */
     unsigned char	buf[ GPS_BUF_LEN ];
 } GpsState;
 
-static GpsState	gpsState = { 0, -1, 0, 0, 0 };
+static GpsState	gpsState = { 0, -1, 0, { 0 }, 0, 0 };
 
 
     /*
@@ -73,9 +74,11 @@ gpsOpen( const char * port, int debug )
     }
 
     if ( ioctl( gpsState.fd, TIOCGETA, &termios) < 0 ) {
-	err( 1, "TIOGETA" );
+	err( 1, "TIOCGETA" );
 	/* does not return */
     }
+    /* save current terminal settings */
+    memcpy( &gpsState.termios, &termios, sizeof gpsState.termios );
     termios.c_ispeed = termios.c_ospeed = 9600;
     termios.c_iflag = 0;
     termios.c_oflag = 0;	/* (ONLRET) */
@@ -85,7 +88,7 @@ gpsOpen( const char * port, int debug )
     termios.c_cc[VMIN] = 1;
     termios.c_cc[VTIME] = 0;
     if ( ioctl( gpsState.fd, TIOCSETAF, &termios ) < 0) {
-	err( 1, "TIOSETAF" );
+	err( 1, "TIOCSETAF" );
 	/* does not return */
     }
     return &gpsState;
@@ -96,6 +99,10 @@ gpsClose( GpsHandle gps )
 {
     if ( gps == &gpsState ) {
 	if ( gpsState.fd != -1 ) {
+	    if ( ioctl( gpsState.fd, TIOCSETAF, &gpsState.termios ) < 0) {
+		err( 1, "TIOCSETAF" );
+		/* does not return */
+	    }
 	    close( gpsState.fd );
 	    gpsState.fd = -1;
 	    gpsState.debug = 0;
