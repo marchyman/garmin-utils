@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.24 2003/04/24 19:37:39 marc Exp $
+ *	$snafu: gpsformat.c,v 1.25 2003/04/25 03:27:26 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -792,76 +792,104 @@ route_link(gps_handle gps, int link)
 	return build_list_entry(data, len);
 }
 
-#if 0
-
-    /*
-     * Look for track entries.  If found and in a valid format build a gps
-     * packet and return it in a GpsListEntry.  Return 0 if a packet could
-     * not be created.
-     */
-static GpsListEntry *
-scanTrack( GpsHandle gps, u_char * buf )
+static struct gps_list_entry *
+track_hdr(gps_handle gps, u_char *buf)
 {
-    double lat;			/* latitude */
-    double lon;			/* longitude */
-    u_char date[ 16 ];   /* track date (not used for upload) */
-    u_char time[ 16 ];	/* track time (not used for upload) */
-    u_char start[ 8 ];	/* start flag */
-    int result;			/* input scan results */
-    u_char * data;	/* gps data buffer */
-    int len;			/* gps data len */
+	u_char *data;
+	int len;
+	int tlen;
+	char name[GPS_STRING_MAX + 1];	/* track name */
 
-    int startFlag = 0;		/* start of track */
+	/* skip any leading whitespace and extract the name */
+	for (len = 0; buf[len]; len += 1)
+		if (! isspace(buf[len]))
+			break;
+	strlcpy(name, &buf[len], GPS_STRING_MAX);
 
-    /* break the input data up into its component fields */
-    result = sscanf( buf, "%lf %lf %15s %15s %7s", &lat, &lon, date, time, start );
-    switch ( result ) {
-      case 2:
-      case 3:
-      case 4:
-	break;
-      case 5:
-	if ( strcmp( start, "start" ) == 0 ) {
-	    startFlag = 1;
-	    break;
-	}
-	/* fall through */
-      default:
-	if ( gpsDebug( gps ) ) {
-            printf ("%d\n", result);
-	    warnx( "bad track: %s", buf );
-	}
-	return 0;
-    }
+	data = gps_buffer_new();
+	len = 0;
 
-    /* byte 1: waypoint type */
-    data = malloc( GPS_FRAME_MAX );
-    assert( data );
-    len = 0;
-    data[ len++ ] = trkData;
+	data[len++] = p_trk_hdr;
 
-    /* byte 2-5: latitude */
-    doubleToSemicircle( lat, &data[ len ] );
-    len += 4;
+	/* byte 1: display */
+	data[len++] = 1;
 
-    /* byte 6-9: longitude */
-    doubleToSemicircle( lon, &data[ len ] );
-    len += 4;
+	/* byte 2: default color */
+	data[len++] = 0xff;
 
-    /* bytes 10-13: time (uploaded as zero */
-    data[ len++ ] = 0;
-    data[ len++ ] = 0;
-    data[ len++ ] = 0;
-    data[ len++ ] = 0;
+	/* byte 3-n: ident (max GPS_STRING_MAX characters) */
+	tlen = strlcpy(&data[len], name, GPS_STRING_MAX);
+	if (++tlen > GPS_STRING_MAX)
+		tlen = GPS_STRING_MAX;
+	len += tlen;
 
-    /* byte 14: start indicator */
-    data[ len++ ] = (u_char) startFlag;
-
-    return buildListEntry( data, len );
+	return build_list_entry(data, len);
 }
 
-#endif
+static struct gps_list_entry *
+tracks(gps_handle gps, u_char *buf)
+{
+	char *p;
+	u_char *data;
+	int len;
+	int start;
+	double lat;
+	double lon;
 
+	/*
+	 * if the buffer starts with a date/time, skip them.
+	 * The input should look like yyyy-mm-dd hh:mm:ss ...
+	 */
+	if (buf[4] == '-' && buf[7] == '-' && buf[13] == ':' && buf[16] == ':')
+		buf += 19;
+
+	/* Latitude and longitude */
+	sscanf(buf, "%lf %lf", &lat, &lon);
+
+	/* look for start flag */
+	p = strrchr(buf, ' ');
+	if (p != NULL)
+		start = strcmp(p+1, "start") == 0;
+	else
+		start = 0;
+
+	gps_printf(gps, 3, "trk %f %f%s\n", lat, lon, start ? " start" : "");
+
+	data = gps_buffer_new();
+	len = 0;
+
+	data[len++] = p_trk_data;
+
+	/* byte 1-4: latitude */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 5-8: longitude */
+	double2semicircle(lon, &data[len]);
+	len += 4;
+
+	/* time (uploaded as zero) */
+	data[len++] = 0;
+	data[len++] = 0;
+	data[len++] = 0;
+	data[len++] = 0;
+
+	/*
+	 * load the magic "unknown" value for altitude and depth if
+	 * supported by this unit.
+	 */
+	if (gps_get_trk_type(gps) == D301) {
+		memcpy(&data[len], no_val, 4);
+		len += 4;
+		memcpy(&data[len], no_val, 4);
+		len += 4;
+	}
+
+	/* start indicator */
+	data[len++] = start;
+
+	return build_list_entry(data, len);
+}
 
 /*
  * create a new list
@@ -987,7 +1015,11 @@ gps_format(gps_handle gps, FILE *stream)
 			}
 			break;
 		case TRACKS:
-			/* ;;; entry = scanTrack( gps, &buf[ ix ] ); */
+			if (strncmp(&buf[ix], "Track:", 6) == 0) {
+				if (gps_get_trk_hdr_type(gps) != 0)
+					entry = track_hdr(gps, &buf[ix + 6]);
+			} else
+				entry = tracks(gps, &buf[ix]);
 			break;
 		}
 
