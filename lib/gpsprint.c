@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.18 2003/04/11 23:46:53 marc Exp $
+ *	$snafu: gpsprint.c,v 1.19 2003/04/12 23:40:05 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -153,14 +153,16 @@ get_string(const u_char *buf, int bufsiz, u_short off, u_short len)
 static long
 get_int(const u_char *buf, int bufsiz, u_short off, u_short len)
 {
-	int val = -1;
+	int val;
 
 	if (off != 0 && bufsiz >= off + len) {
+		val = 0;
 		do {
 			val <<= 8;
 			val += buf[off + --len];
 		} while (len);
-	}
+	} else
+		val = -1;
 	return val;
 }
 
@@ -356,7 +358,6 @@ print_track(const u_char *trk, int len, int type)
 				time += UNIX_TIME_OFFSET;
 				strftime(buf, sizeof buf, "%Y-%m-%d %T",
 					 gmtime(&time));
-				printf(" %s", buf);
 			} else
 				strlcat(buf, "unknown", sizeof buf);
 			if (ti->alt_off)
@@ -368,8 +369,13 @@ print_track(const u_char *trk, int len, int type)
 			else
 				depth = 0.0;
 			new = get_int(trk, len, ti->new_off, ti->new_len);
-			printf("%s %10f %11f %f %f%s\n", buf, lat, lon,
-			       alt, depth, new ? " start" : "");
+			printf("%s %10f %11f", buf, lat, lon);
+			if (depth == 0.0) {
+				if (alt != 0.0)
+					printf(" %f", alt);
+			} else
+				printf(" %f %f", alt, depth);
+			printf("%s\n", new ? " start" : "");
 		}
 	} else
 		warnx("unknown track packet type: %d", type);
