@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.8 2001/06/19 04:36:47 marc Exp $
+ *	$snafu: gpsprint.c,v 1.9 2001/07/09 22:46:02 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -117,6 +117,19 @@ printWaypoint( const unsigned char * wpt, int len, int wptType )
         }
         printf( "%s %10f %11f %5d/%d %s\n", name, lat, lon,
 	        sym, disp, comment );
+#if 0
+	/* incomplete code from Stefan Cermak <cermak@emt.tugraz.at>
+	   for the etrex */
+	} else if (wptType == D108) {
+	    unsigned char offset_comment;
+	    double lat = semicircleToDouble( &wpt[ 25 ] );
+	    double lon = semicircleToDouble( &wpt[ 29 ] );
+	    sym= wpt[5];
+	    disp= wpt[3];
+	    offset_comment=49+strlen(&wpt[49])+1;
+	    printf( "%s %10f %11f %d/%d %s\n", &wpt[49], lat, lon, sym,
+		    disp, &wpt[offset_comment] );
+#endif
     } else {
         warnx ("unknown waypoint packet type");
     }
