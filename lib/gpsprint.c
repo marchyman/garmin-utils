@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.21 2003/04/14 07:16:21 marc Exp $
+ *	$snafu: gpsprint.c,v 1.22 2003/04/16 23:08:37 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -38,7 +38,6 @@ semicircle2double(const u_char * s)
 	long work = s[0] + (s[1] << 8) + (s[2] << 16) + (s[3] << 24);
 	return work * 180.0 / (double) (0x80000000);
 }
-
 
 #if defined(__vax__)
 
@@ -192,10 +191,10 @@ get_int(const u_char *buf, int bufsiz, u_short off, u_short len)
  */
 struct wpt_info {
 	int	wpt_type;
-	u_short	lat_off;
-	u_short	long_off;
-	u_short	name_off;
-	u_short	name_len;
+	u_short	lat_off;	/* length always 4 */
+	u_short	long_off;	/* length always 4 */
+	u_short	name_off;	/* length always 6 */
+	u_short	alt_off;	/* length always 4 */
 	u_short	sym_off;
 	u_short	sym_len;
 	u_short	disp_off;
@@ -205,16 +204,16 @@ struct wpt_info {
 };
 
 static struct wpt_info winfo[] = {
-	{ D100,  7, 11, 1, 6,  0, 0,  0, 0, 19, 40 },
-	{ D101,  7, 11, 1, 6, 63, 1,  0, 0, 19, 40 },
-	{ D102,  7, 11, 1, 6, 63, 2,  0, 0, 19, 40 },
-	{ D103,  7, 11, 1, 6, 59, 1, 60, 1, 19, 40 },
-	{ D104,  7, 11, 1, 6, 63, 2, 65, 1, 19, 40 },
-	{ D105,  1,  5, 0, 0,  9, 2,  0, 0, 11, 40 },
-	{ D106, 15, 19, 0, 0, 23, 2,  0, 0, 25, 40 },
-	{ D107,  7, 11, 1, 6, 59, 1, 60, 1, 19, 40 },
-	{ D108, 25, 29, 0, 0,  5, 2,  3, 1, 49, 51 },
-	{ D109, 25, 29, 0, 0,  5, 2,  0, 0, 53, 51 }
+	{ D100,  7, 11, 1,  0,  0, 0,  0, 0, 19, 40 },
+	{ D101,  7, 11, 1,  0, 63, 1,  0, 0, 19, 40 },
+	{ D102,  7, 11, 1,  0, 63, 2,  0, 0, 19, 40 },
+	{ D103,  7, 11, 1,  0, 59, 1, 60, 1, 19, 40 },
+	{ D104,  7, 11, 1,  0, 63, 2, 65, 1, 19, 40 },
+	{ D105,  1,  5, 0,  0,  9, 2,  0, 0, 11, 40 },
+	{ D106, 15, 19, 0,  0, 23, 2,  0, 0, 25, 40 },
+	{ D107,  7, 11, 1,  0, 59, 1, 60, 1, 19, 40 },
+	{ D108, 25, 29, 0, 33,  5, 2,  3, 1, 49, 51 },
+	{ D109, 25, 29, 0, 33,  5, 2,  0, 0, 53, 51 }
 };
 
 static struct wpt_info *
@@ -237,18 +236,30 @@ print_waypoint(const u_char *wpt, int len, int type)
 	char *cmnt;
 	long sym;
 	long dsp;
+	float alt;
 
 	wi = find_wpt_info(type);
 	if (wi != NULL) {
 		lat = semicircle2double(&wpt[wi->lat_off]);
 		lon = semicircle2double(&wpt[wi->long_off]);
-		name = get_string(wpt, len, wi->name_off, wi->name_len);
+		if (wi->alt_off)
+			alt = get_float(&wpt[wi->alt_off]);
+		else
+			alt = no_val.f;
+		name = get_string(wpt, len, wi->name_off, 6);
 		sym = get_int(wpt, len, wi->sym_off, wi->sym_len);
 		dsp = get_int(wpt, len, wi->disp_off, wi->disp_len);
 		cmnt = get_string(wpt, len, wi->cmnt_off, wi->cmnt_len);
-		printf("%s %10f %11f %5ld/%ld %s\n", name == NULL ? "-" : name,
-		       lat, lon, sym == -1 ? 0 : sym, dsp == -1 ? 0 : dsp,
-		       cmnt == NULL ? "" : cmnt);
+		if (alt == no_val.f)
+			printf("%s %10f %11f %5ld/%ld %s\n",
+			       name == NULL ? "-" : name, lat, lon,
+			       sym == -1 ? 0 : sym, dsp == -1 ? 0 : dsp,
+			       cmnt == NULL ? "" : cmnt);
+		else
+			printf("%s %10f %11f %11f %5ld/%ld %s\n",
+			       name == NULL ? "-" : name, lat, lon, alt,
+			       sym == -1 ? 0 : sym, dsp == -1 ? 0 : dsp,
+			       cmnt == NULL ? "" : cmnt);
 		if (name)
 			free(name);
 		if (cmnt)

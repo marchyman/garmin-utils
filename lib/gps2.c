@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps2.c,v 1.12 2003/04/14 20:46:09 marc Exp $
+ *	$snafu: gps2.c,v 1.13 2003/04/16 23:08:37 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -295,7 +295,7 @@ gps_wait(gps_handle gps, u_char typ, int timeout)
 int
 gps_send_wait(gps_handle gps, const u_char *buf, int cnt, int timeout)
 {
-	int retries = 5;
+	int retries = 3;
 	int ok = -1;
 	int len = cnt;
 	u_char *data = gps_frame(buf, &len);

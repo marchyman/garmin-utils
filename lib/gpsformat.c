@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.15 2003/04/14 07:16:21 marc Exp $
+ *	$snafu: gpsformat.c,v 1.16 2003/04/16 23:08:37 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -23,6 +23,12 @@ enum {
 	ROUTES,
 	TRACKS
 };
+
+/*
+ * Magic value that translates to a float value of 1.0e25 in the GPS
+ * and indicates an unsupported or unknown value.
+ */
+static u_char no_val[] = { 0x51, 0x59, 0x04, 0x48 };
 
 /*
  * Figure out the operating state from the data in the buffer arg.
@@ -380,9 +386,17 @@ d108_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
 	double2semicircle(lat, &data[len]);
 	len += 4;
 
-	/* byte 33-44: alt, depth, and proximity (uploaded as zero) */
-	memset(&data[len], 0, 12);
-	len += 12;
+	/* byte 33-36: alt */
+	memcpy(&data[len], no_val, 4);
+	len += 4;
+
+	/* byte 37-40: depth */
+	memcpy(&data[len], no_val, 4);
+	len += 4;
+
+	/* byte 41-44: proximity */
+	memcpy(&data[len], no_val, 4);
+	len += 4;
 
 	/* byte 45-48: state and country codes: set to the empty string */
 	data[len++] = ' ';
@@ -400,7 +414,8 @@ d108_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
 }
 
 static struct gps_list_entry *
-d109_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
+d109_wpt(int state, double lat, double lon, char *cmnt, int sym,
+	 int disp)
 {
 	u_char *data;
 	int len;
@@ -442,10 +457,17 @@ d109_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
 	double2semicircle(lat, &data[len]);
 	len += 4;
 
-	/* byte 33-44: alt, depth, and proximity (uploaded as zero) */
-	/* ;;; this is wrong, upload as 081 089 004 105 */
-	memset(&data[len], 0, 12);
-	len += 12;
+	/* byte 33-36: alt */
+	memcpy(&data[len], no_val, 4);
+	len += 4;
+
+	/* byte 37-40: depth */
+	memcpy(&data[len], no_val, 4);
+	len += 4;
+
+	/* byte 41-44: proximity */
+	memcpy(&data[len], no_val, 4);
+	len += 4;
 
 	/* byte 45-48: state and country codes: set to the empty string */
 	data[len++] = ' ';
@@ -499,8 +521,12 @@ waypoints(gps_handle gps, u_char *buf, int state)
 	result = sscanf(buf, "%6c %lf %lf %d/%d %40c",
 			name, &lat, &lon, &sym, &disp, comment);
 	if (result != 6) {
-		gps_printf(gps, 1, __func__ ": bad format: %s\n", buf);
-		return 0;
+		result = sscanf(buf, "%6c %lf %lf %*f %d/%d %40c",
+				name, &lat, &lon, &sym, &disp, comment);
+		if (result != 7) {
+			gps_printf(gps, 1, __func__ ": bad format: %s\n", buf);
+			return 0;
+		}
 	}
 	name[6] = 0;
 	comment[40] = 0;
