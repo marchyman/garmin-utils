@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsprint.c,v 1.5 2001/05/02 00:34:55 marc Exp $
+ *	$snafu: gpsprint.c,v 1.6 2001/05/03 16:46:57 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *

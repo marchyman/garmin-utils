@@ -1,5 +1,5 @@
 /*
- *	$Id: gps1.c,v 1.5 2001/05/03 16:43:42 marc Exp $
+ *	$snafu: gps1.c,v 1.6 2001/05/03 16:46:57 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
