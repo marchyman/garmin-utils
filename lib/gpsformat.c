@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.17 2003/04/17 23:08:29 marc Exp $
+ *	$snafu: gpsformat.c,v 1.18 2003/04/17 23:20:13 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -518,18 +518,20 @@ waypoints(gps_handle gps, u_char *buf, int state)
 	int wpt;
 
 	/* break the input data up into its component fields */
-	result = sscanf(buf, "%6c %lf %lf %d/%d %40c",
+	result = sscanf(buf, "%6c %lf %lf %*f %d/%d %40c",
 			name, &lat, &lon, &sym, &disp, comment);
 	if (result != 6) {
-		result = sscanf(buf, "%6c %lf %lf %*f %d/%d %40c",
+		result = sscanf(buf, "%6c %lf %lf %d/%d %40c",
 				name, &lat, &lon, &sym, &disp, comment);
-		if (result != 7) {
+		if (result != 6) {
 			gps_printf(gps, 1, __func__ ": bad format: %s\n", buf);
 			return 0;
 		}
 	}
 	name[6] = 0;
 	comment[40] = 0;
+	gps_printf(gps, 3, "wpt: %s %lf %lf %d/%d %s\n", name, lat, lon, sym,
+		   disp, comment);
 
 	/* Now figure out which waypoint format is being used and
 	   call the appropriate routine */
@@ -755,7 +757,7 @@ gps_format(gps_handle gps, FILE *stream)
 				break;
 
 		/* Ignore comments and/or empty lines */
-		if (!buf[ix] || buf[ix] == '#' )
+		if (buf[ix] == 0 || buf[ix] == '#')
 			continue;
 
 		/* check for list terminator */
