@@ -1,8 +1,10 @@
 /* -*- tab-width: 4; -*-
- * $snafu: garload.c,v 1.11 2003/04/11 21:17:15 marc Exp $
+ * $snafu: garload.c,v 1.12 2003/04/13 18:01:16 marc Exp $
  *
  * Placed in the Public Domain by 1998 Marco S. Hyman
  */
+
+#include <sys/types.h>
 
 #include <err.h>
 #include <stdarg.h>

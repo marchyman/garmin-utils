@@ -1,8 +1,10 @@
 /*
- *	$snafu: gpsprod.c,v 1.6 2003/04/11 23:46:53 marc Exp $
+ *	$snafu: gpsprod.c,v 1.7 2003/04/13 18:01:17 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
+
+#include <sys/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>

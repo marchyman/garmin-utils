@@ -1,8 +1,10 @@
 /*
- *	$snafu: gpsformat.c,v 1.13 2003/04/12 22:40:11 marc Exp $
+ *	$snafu: gpsformat.c,v 1.14 2003/04/13 18:01:16 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
+
+#include <sys/types.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -416,8 +418,8 @@ d109_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
 	/* byte 2: waypoint class */
 	data[len++] = 0;
 
-	/* byte 3: display and color */
-	data[len++] = (disp << 5) & 0x60;
+	/* byte 3: display and color (1f == default color */
+	data[len++] = ((disp << 5) & 0x60) | 0x1f;
 
 	/* byte 4: attributes (0x70 per garmin doc) */
 	data[len++] = (u_char) 0x70;

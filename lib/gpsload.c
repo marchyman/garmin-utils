@@ -1,8 +1,10 @@
 /*
- *	$snafu: gpsload.c,v 1.10 2003/04/11 23:46:53 marc Exp $
+ *	$snafu: gpsload.c,v 1.11 2003/04/13 18:01:17 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
+
+#include <sys/types.h>
 
 #include <err.h>
 #include <stdio.h>

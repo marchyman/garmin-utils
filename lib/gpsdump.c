@@ -1,8 +1,10 @@
 /*
- *	$snafu: gpsdump.c,v 1.8 2003/04/11 23:46:53 marc Exp $
+ *	$snafu: gpsdump.c,v 1.9 2003/04/13 18:01:16 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
+
+#include <sys/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>

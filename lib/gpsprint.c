@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.19 2003/04/12 23:40:05 marc Exp $
+ *	$snafu: gpsprint.c,v 1.20 2003/04/13 18:01:17 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -331,6 +331,7 @@ find_trk_info(int type)
  *	date       time     lat      long      alt   depth new
  *	yyyy-mm-dd hh:mm:ss 99.99999 999.99999 99.99 99.99 [start]
  */
+#define NO_VAL	1.0e25
 static void
 print_track(const u_char *trk, int len, int type)
 {
@@ -363,15 +364,15 @@ print_track(const u_char *trk, int len, int type)
 			if (ti->alt_off)
 				alt = get_float(&trk[ti->alt_off]);
 			else
-				alt = 0.0;
+				alt = NO_VAL;
 			if (ti->depth_off)
 				depth = get_float(&trk[ti->depth_off]);
 			else
-				depth = 0.0;
+				depth = NO_VAL;
 			new = get_int(trk, len, ti->new_off, ti->new_len);
 			printf("%s %10f %11f", buf, lat, lon);
-			if (depth == 0.0) {
-				if (alt != 0.0)
+			if (depth == NO_VAL) {
+				if (alt != NO_VAL)
 					printf(" %f", alt);
 			} else
 				printf(" %f %f", alt, depth);
