@@ -1,5 +1,5 @@
 /*
- *	$Id: garload.c,v 1.1 1998/05/12 05:01:15 marc Exp $
+ *	$Id: garload.c,v 1.2 1998/05/12 23:12:59 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -18,6 +18,10 @@
 #include <stdarg.h>
 #include <err.h>
 
+#include "gps1.h"
+#include "gpsversion.h"
+#include "gpsformat.h"
+
 static void
 usage( const char* prog, const char* err, ... )
 {
@@ -35,9 +39,12 @@ int
 main( int argc, char * argv[] )
 {
     int debug = 0;
-    const char* port = "/dev/cua00";
+    const char* port = DEFAULT_PORT;
+
     int opt;
     char* rem;
+    GpsHandle gps;
+    GpsLists * lists;
 
     while (( opt = getopt( argc, argv, "d:p:" )) != -1 ) {
 	switch ( opt ) {
@@ -65,6 +72,22 @@ main( int argc, char * argv[] )
 	    usage( argv[ 0 ], 0 );
 	    /* does not return */
 	}
+    }
+
+    if ( argc != optind ) {
+	errx( 1, "unknown command line argument: %s ...", argv[ optind ] );
+	/* does not return */
+    }
+
+    gps = gpsOpen( port, debug );
+    if ( gpsVersion( gps ) != 1 ) {
+	errx( 1, "can't communicate with GPS unit" );
+	/* does not return */
+    }
+    lists = gpsFormat( gps, stdin );
+    if ( ! lists ) {
+	errx( 1, "no valid GPS data found" );
+	/* does not return */
     }
     ;;;
     return 0;

@@ -1,5 +1,5 @@
 /*
- *	$Id: gardump.c,v 1.1 1998/05/12 05:01:16 marc Exp $
+ *	$Id: gardump.c,v 1.2 1998/05/12 23:12:56 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -19,8 +19,7 @@
 #include <err.h>
 
 #include "gps1.h"
-#include "gpsprod.h"
-#include "gpscap.h"
+#include "gpsversion.h"
 #include "gpsdump.h"
 
 static void
@@ -36,31 +35,6 @@ usage( const char* prog, const char* err, ... )
     exit( 1 );
 }
 
-static void
-showGpsVersion( GpsHandle gps )
-{
-    int productId;
-    int softwareVersion;
-    char * productDescription;
-
-    if ( gpsProduct( gps, &productId, &softwareVersion,
-		     &productDescription ) ) {
-	errx( 1, "can't get gps version info" );
-	/* does not return */
-    }
-    printf( "[product %d, version %d: %s]\n", productId, softwareVersion,
-	    productDescription ? productDescription : "unknown" );
-    if ( productDescription ) {
-	free( productDescription );
-    }
-
-    /* Grab the protocol capabilities packet if it is there so it doesn't
-       screw up anything else.  We don't use it.  Some units send it
-       every time the product description is requested. */
-
-    gpsProtocolCap( gps );
-}
-
 int
 main( int argc, char * argv[] )
 {
@@ -68,8 +42,8 @@ main( int argc, char * argv[] )
     int routes = 0;
     int tracks = 0;
     int debug = 0;
-
     const char* port = DEFAULT_PORT;
+
     int opt;
     char* rem;
     GpsHandle gps;
@@ -119,6 +93,12 @@ main( int argc, char * argv[] )
 	    /* does not return */
 	}
     }
+
+    if ( argc != optind ) {
+	errx( 1, "unknown command line argument: %s ...", argv[ optind ] );
+	/* does not return */
+    }
+
     if (( ! waypoints ) && ( ! routes ) && ( ! tracks )) {
 	waypoints = routes = tracks = 1;
 	if ( debug > 1 ) {
@@ -127,7 +107,10 @@ main( int argc, char * argv[] )
     }
 
     gps = gpsOpen( port, debug );
-    showGpsVersion( gps );
+    if ( gpsVersion( gps ) != 1 ) {
+	errx( 1, "can't communicate with GPS unit" );
+	/* does not return */
+    }
     if ( waypoints ) {
 	gpsCmd( gps, CMD_GET_WPT );
     }
