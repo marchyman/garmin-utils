@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.16 2003/04/11 18:56:32 marc Exp $
+ *	$snafu: gpsprint.c,v 1.17 2003/04/11 20:28:46 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -147,9 +147,10 @@ get_string(const unsigned char *buf, int bufsiz, u_short off, u_short len)
 }
 
 /*
- * grab an integer from a little endian buffer given its offset and length.
+ * grab an integer value from a little endian buffer given its offset and
+ * length.
  */
-static int
+static long
 get_int(const unsigned char *buf, int bufsiz, u_short off, u_short len)
 {
 	int val = -1;
@@ -214,8 +215,8 @@ print_waypoint(const unsigned char *wpt, int len, int type)
 	double lon;
 	char *name;
 	char *cmnt;
-	int sym;
-	int dsp;
+	long sym;
+	long dsp;
 
 	wi = find_wpt_info(type);
 	if (wi != NULL) {
@@ -225,7 +226,7 @@ print_waypoint(const unsigned char *wpt, int len, int type)
 		sym = get_int(wpt, len, wi->sym_off, wi->sym_len);
 		dsp = get_int(wpt, len, wi->disp_off, wi->disp_len);
 		cmnt = get_string(wpt, len, wi->cmnt_off, wi->cmnt_len);
-		printf("%s %10f %11f %5d/%d %s\n", name ? name : "", lat, lon,
+		printf("%s %10f %11f %5ld/%ld %s\n", name ? name : "", lat, lon,
 		       sym == -1 ? 0 : sym, dsp == -1 ? 0 : dsp,
 		       cmnt ? cmnt : "");
 		if (name)
@@ -269,8 +270,8 @@ static void
 print_route(const unsigned char *rte, int len, int type)
 {
 	struct rte_info *ri;
-	int num;
-	int class;
+	long num;
+	long class;
 	char *id;
 
 	ri = find_rte_info(type);
@@ -278,7 +279,7 @@ print_route(const unsigned char *rte, int len, int type)
 		num = get_int(rte, len, ri->num_off, 1);
 		id = get_string(rte, len, ri->cmnt_off, ri->cmnt_len);
 		class = get_int(rte, len, ri->class_off, ri->class_len);
-		printf("**%d %s %s\n", num == -1 ? 0 : num, id ? id : "",
+		printf("**%ld %s %s\n", num == -1 ? 0 : num, id ? id : "",
 		       class == -1 ? "" :
 		       class == 0 ? "line" :
 		       class == 1 ? "link" :
@@ -287,71 +288,92 @@ print_route(const unsigned char *rte, int len, int type)
 		       class == 255 ? "snap" : "(unknown class)");
 	} else
 		warnx("unknown route packet type: %d", type);
-		
 }
 
-#if 0
+/*
+ * Table of offsets and lengths for track related packets
+ */
+struct trk_info {
+	int	trk_type;
+	u_short	lat_off;
+	u_short	long_off;
+	u_short time_off;
+	u_short time_len;
+	u_short	alt_off;
+	u_short	depth_off;
+	u_short	new_off;
+	u_short	new_len;
+	u_short ident_off;
+	u_short ident_len;
+};
 
-    /*
-     * print a track.  The format is:
-     *	 1	packet type
-     *	 4	lat
-     *	 4	long
-     *	 4	time
-     *	 1	new track flag
-     *
-     * printed as:
-     * -99.999999 -999.999999 yyyy-mm-dd hh:mm:ss [start]
-     *
-     */
-static void
-printTrack(const unsigned char * trk, int len, int type)
+static struct trk_info tinfo[] = {
+	{ D300, 1, 5, 9, 4,  0,  0, 13, 1, 0,  0 },
+	{ D301, 1, 5, 9, 4, 13, 17, 21, 1, 0,  0 },
+	{ D310, 0, 0, 0, 0,  0,  0,  0, 0, 3, 51 }
+};
+
+static struct trk_info *
+find_trk_info(int type)
 {
-    double lat, lon, alt, dpth;
-    time_t time;
-    const char * startstring;
-    char timestring[32];
-
-    switch (type) {
-    case D300:
-	lat = semicircle2double(&trk[1]);
-	lon = semicircle2double(&trk[5]);
-	time = UNIX_TIME_OFFSET + trk[9] + (trk[10] << 8) +
-		  (trk[11] << 16) + (trk[12] << 24);
-	startstring = trk[13] ? " start" : "";
-	printf("%10f %11f %s%s\n", lat, lon, timestring, startstring);
-	break;
-    case D301:
-	lat = semicircle2double(&trk[1]);
-	lon = semicircle2double(&trk[5]);
-	time = UNIX_TIME_OFFSET + trk[9] + (trk[10] << 8) +
-		  (trk[11] << 16) + (trk[12] << 24);
-	alt = get_float(&trk[13]);
-	dpth = get_float(&trk[17]);
-	startstring = trk[21] ? " start" : "";
-	if (time > 0) {
-	    struct tm * gmt = gmtime(&time);
-	    snprintf(timestring, 32, "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d",
-		 gmt->tm_year + 1900, gmt->tm_mon + 1, gmt->tm_mday,
-		 gmt->tm_hour, gmt->tm_min, gmt->tm_sec);
-	} else {
-	    strcpy(timestring, "unknown");
-	}
-	printf("%10f %11f %f %f %s%s\n", lat, lon, alt, dpth,
-	    timestring, startstring);
-	break;
-    default:
-	printf("[unknown trk point type %d\n", type);
-    }
+	int ix;
+	for (ix = 0; ix < sizeof tinfo / sizeof tinfo[0]; ix++)
+		if (tinfo[ix].trk_type == type)
+			return &tinfo[ix];
+	return NULL;
 }
 
+/*
+ * print a track header or entry.  New entry format:
+ *
+ *	date       time     lat      long      alt   depth new
+ *	yyyy-mm-dd hh:mm:ss 99.99999 999.99999 99.99 99.99 [start]
+ */
 static void
-printTrackHdr(const unsigned char * trk, int len)
+print_track(const u_char *trk, int len, int type)
 {
-	printf("Track: %s\n", trk + 3);
-}
+	struct trk_info *ti;
+	char buf[24];
+	char *id;
+	float lat;
+	float lon;
+	float alt;
+	float depth;
+	time_t time;
+	long new;
 
-#endif
+	ti = find_trk_info(type);
+	if (ti != NULL) {
+		id = get_string(trk, len, ti->ident_off, ti->ident_len);
+		if (id) {
+			printf("Track: %s\n", id);
+			free(id);
+		} else {
+			lat = semicircle2double(&trk[ti->lat_off]);
+			lon = semicircle2double(&trk[ti->long_off]);
+			time = get_int(trk, len, ti->time_off, ti->time_len);
+			if (time) {
+				time += UNIX_TIME_OFFSET;
+				strftime(buf, sizeof buf, "%Y-%m-%d %T",
+					 gmtime(&time));
+				printf(" %s", buf);
+			} else
+				strlcat(buf, "unknown", sizeof buf);
+			if (ti->alt_off)
+				alt = get_float(&trk[ti->alt_off]);
+			else
+				alt = 0.0;
+			if (ti->depth_off)
+				depth = get_float(&trk[ti->depth_off]);
+			else
+				depth = 0.0;
+			new = get_int(trk, len, ti->new_off, ti->new_len);
+			printf("%s %10f %11f %f %f%s\n", buf, lat, lon,
+			       alt, depth, new ? " start" : "");
+		}
+	} else
+		warnx("unknown track packet type: %d", type);
+}
 
 static void
 print_time(const unsigned char *utc, int len)
@@ -401,13 +423,13 @@ gps_print(gps_handle gps, enum gps_cmd_id cmd, const unsigned char *packet,
 			print_route(packet, len, gps_get_rte_lnk_type(gps));
 			break;
 		case p_trk_data:
-			/* printTrack(packet, len, gpsGetTrkTrkType(gps)); */
+			print_track(packet, len, gps_get_trk_type(gps));
 			break;
 		case p_utc_data:
 			print_time(packet, len);
 			break;
 		case p_trk_hdr:
-			/* printTrackHdr(packet, len); */
+			print_track(packet, len, gps_get_trk_hdr_type(gps));
 			break;
 		default:
 			printf("[unknown protocol %d]\n", packet[0]);

@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps2.c,v 1.7 2003/04/11 01:21:49 marc Exp $
+ *	$snafu: gps2.c,v 1.8 2003/04/11 20:28:45 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -86,7 +86,7 @@ gps_send(gps_handle gps, const unsigned char *buf, int cnt)
 	unsigned char *data = gps_frame(buf, &len);
 
 	if (data) {
-		if (gps_debug(gps) > 3)
+		if (gps_debug(gps) >= 4)
 			gps_display('}', buf, cnt);
 		ok = gps_write(gps, data, len);
 		free(data);
@@ -162,12 +162,10 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 
 		switch (stat) {
 		case -1:
-			if (gps_debug(gps) > 1)
-				warnx("sync error: gps recv");
+			gps_printf(gps, 2, "sync error: gps recv\n");
 			return -1;
 		case 0:
-			if (gps_debug(gps) > 1)
-				warnx("timeout: gps recv");
+			gps_printf(gps, 2, "timeout: gps recv\n");
 			return 0;
 		case 1:
 			break;
@@ -186,8 +184,7 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 		do {
 			stat = gps_read(gps, ptr, READ_TO);
 			if (stat != 1) {
-				if (gps_debug(gps) > 1)
-					warnx("frame error: gps recv");
+				gps_printf(gps, 2, "frame error: gps recv\n");
 				return -1;
 			}
 			if (dle_seen) {
@@ -222,26 +219,27 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 			/* warn if the length is not the expected value.
 			   Add in the packet type to the expected length. */
 			rlen += 1;
-			if (gps_debug(gps) && (rlen != len))
-				warnx("bad frame len, %d expected, %d received",
-				      rlen, len);
+			if (rlen != len)
+				gps_printf(gps, 1, "bad frame len, "
+					   "%d expected, %d received\n",
+					   rlen, len);
 			if ((sum & 0xff) == 0) {
 				/* good checksum, update len rcvd and return */
 				*cnt = len;
-				if (gps_debug(gps) > 3)
+				if (gps_debug(gps) >= 4)
 					gps_display('{', buf, len);
 				return 1;
 			} else {
 				/* bad checksum -- try again */
-				if (gps_debug(gps) > 3)
+				if (gps_debug(gps) >= 4)
 					gps_display('!', buf, len);
 				return -1;
 			}
 		} else {
 			/* frame too large, return error */
-			if (gps_debug(gps))
-				warnx("frame too large for %d byte buffer",
-				      *cnt);
+			gps_printf(gps, 1,
+				   "frame too large for %d byte buffer\n",
+				   *cnt);
 			return -1;
 		}
 	}
@@ -262,7 +260,7 @@ gps_send_wait(gps_handle gps, const unsigned char * buf, int cnt)
 	int resplen;
 
 	if (data && response) {
-		if (gps_debug(gps) > 3)
+		if (gps_debug(gps) >= 4)
 			gps_display('}', buf, cnt);
 		while (retry--) {
 			if (gps_write(gps, data, len) == 1) {
@@ -275,14 +273,12 @@ gps_send_wait(gps_handle gps, const unsigned char * buf, int cnt)
 						break;
 					}
 				}
-				if (gps_debug(gps) > 1)
-					warnx("retry: send and wait");
+				gps_printf(gps, 2, "retry: send and wait\n");
 			}
 		}
 	}
 	if (data)
 		free(data);
-
 	if (response)
 		free(response);
 

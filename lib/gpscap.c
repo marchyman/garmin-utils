@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpscap.c,v 1.8 2003/04/11 01:21:49 marc Exp $
+ *	$snafu: gpscap.c,v 1.9 2003/04/11 20:28:45 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -34,8 +34,7 @@ gps_protocol_parse(gps_handle gps, const unsigned char *data, int datalen)
 		for (ix = 1; ix + 2 < datalen; ix += 3) {
 			tag = data[ix];
 			val = data[ix + 1] + (data[ix + 2] << 8);
-			if (gps_debug(gps) > 2)
-				warnx("Capability %c%03d", tag, val);
+			gps_printf(gps, 3, "Capability %c%03d\n", tag, val);
 			switch (tag) {
 			case 'A':
 				proto = val;
@@ -85,8 +84,7 @@ gps_protocol_parse(gps_handle gps, const unsigned char *data, int datalen)
 			}
 		}
 	} else
-		if (gps_debug(gps) > 1)
-			warnx("unknown packet type %d", data[0]);
+		gps_printf(gps, 2, "unknown packet type %d\n", data[0]);
 }
 
 /*
@@ -117,19 +115,16 @@ gps_protocol_cap(gps_handle gps)
 	gps_set_trk_type(gps, D300);
 
 	if (! data) {
-		if (gps_debug(gps))
-			warnx("no memory: protocol capabilities");
+		gps_printf(gps, 1, "no memory: protocol capabilities\n");
 		return -1;
 	}
-	if (gps_debug(gps) > 2)
-		warnx("recv: protocol capabilities");
+	gps_printf(gps, 3, "recv: protocol capabilities\n");
 	while (retries--) {
 		datalen = GPS_FRAME_MAX;
 		switch (gps_recv(gps, RCV_TO, data, &datalen)) {
 		case -1:
 			gps_send_nak(gps, *data);
-			if (gps_debug(gps) > 2)
-				warnx("retry: protocol capabilities ");
+			gps_printf(gps, 3, "retry: protocol capabilities\n");
 			break;
 		case 0:
 			goto done;
@@ -137,8 +132,7 @@ gps_protocol_cap(gps_handle gps)
 			gps_protocol_parse(gps, data, datalen);
 			gps_send_ack(gps, *data);
 			free(data);
-			if (gps_debug(gps) > 2)
-				warnx("rcvd: protocol capabilities");
+			gps_printf(gps, 3, "rcvd: protocol capabilities\n");
 			return 0;
 		}
 	}

@@ -1,4 +1,4 @@
-/* $snafu: gpslib.h,v 1.4 2003/04/11 18:56:32 marc Exp $ */
+/* $snafu: gpslib.h,v 1.5 2003/04/11 20:28:45 marc Exp $ */
 /* PUBLIC DOMAIN April 2003 <marc@snafu.org> */
 
 /*
@@ -115,6 +115,7 @@ int	gps_get_wpt_type(gps_handle);
 int	gps_load(gps_handle, struct gps_lists *);
 gps_handle gps_open(const char *, int);
 int	gps_print(gps_handle, enum gps_cmd_id, const unsigned char *, int);
+void	gps_printf(gps_handle, int, const char *, ...);
 int	gps_product(gps_handle, int *, int *, char **);
 int	gps_protocol_cap(gps_handle);
 int	gps_read(gps_handle, unsigned char *, int);

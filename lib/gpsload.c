@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsload.c,v 1.7 2003/04/11 01:21:49 marc Exp $
+ *	$snafu: gpsload.c,v 1.8 2003/04/11 20:28:46 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -9,21 +9,17 @@
 
 #include "gpslib.h"
 
-    /*
-     * Garmin GPS load protocol
-     *
-     * dev1 -> dev2:	transfer begin
-     * dev1 -> dev2:	transfer data
-     * dev1 -> dev2:	transfer end
-     */
+/*
+ * Garmin GPS load protocol
+ *
+ * dev1 -> dev2:	transfer begin
+ * dev1 -> dev2:	transfer data
+ * dev1 -> dev2:	transfer end
+ */
 
-    /*
-     * Load the lists specified.  Return 1 if upload successful,
-     * -1 otherwise.
-     */
-    /*
-     * Send a start transfer.
-     */
+/*
+ * Send a start transfer.
+ */
 static int
 startLoad( GpsHandle gps, int records )
 {
@@ -78,6 +74,10 @@ cancelLoad( GpsHandle gps )
     return gpsSendWait( gps, buf, 3 );
 }
 
+/*
+ * Load the lists specified.  Return 1 if upload successful,
+ * -1 otherwise.
+ */
 int
 gpsLoad( GpsHandle gps, GpsLists * lists )
 {

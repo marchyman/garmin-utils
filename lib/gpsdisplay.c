@@ -1,18 +1,35 @@
 /*
- *	$snafu: gpsdisplay.c,v 1.7 2003/04/10 20:50:22 marc Exp $
+ *	$snafu: gpsdisplay.c,v 1.8 2003/04/11 20:28:45 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
 
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <strings.h>
 
 #include "gpslib.h"
 
-    /*
-     * Function and variables to dump data to stderr
-     */
+/*
+ * Debug output function.  Spit out message to stderr only if
+ * the current debug output level is >= the given level.
+ */
+void
+gps_printf(gps_handle gps, int level, const char *fmt, ...)
+{
+	if (gps_debug(gps) >= level) {
+		va_list ap;
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
+}
+
+/*
+ * Function and variables to dump data to stderr.   Data bytes are printed
+ * as decimal values to match the garmin doc.
+ */
 #define DUMP_BUFLEN		80
 #define DUMP_DEC_OFF		4
 #define DUMP_ASCII_OFF		(DUMP_DEC_OFF + 44)
@@ -58,14 +75,10 @@ gps_display(char direction, const unsigned char * buf, int len)
 				*a++ = *d;
 			else
 				*a++ = '.';
-			*h++ = 48 + *d / 100;
-			*h++ = 48 + *d % 100 / 10;
-			*h++ = 48 + *d % 10;
+			*h++ = '0' + *d / 100;
+			*h++ = '0' + *d % 100 / 10;
+			*h++ = '0' + *d % 10;
 			*h++ = ' ';
-			if (++sent == 5) {
-				*a++ = ' ';
-				*h++ = ' ';
-			};
 			d++;
 		}
 		*a = 0;

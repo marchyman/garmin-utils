@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsversion.c,v 1.5 2003/04/11 01:21:49 marc Exp $
+ *	$snafu: gpsversion.c,v 1.6 2003/04/11 20:28:46 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -10,37 +10,34 @@
 
 #include "gpslib.h"
 
-    /*
-     * Request the unit version and output to stdout.  Wait for a
-     * protocol capabilities packet and consume it if seen.
-     *
-     *	-1:	command failed
-     *	1:	command succeeded.
-     */
+/*
+ * Request the unit version and output to stdout.  Wait for a
+ * protocol capabilities packet and consume it if seen.
+ *
+ *	-1:	command failed
+ *	1:	command succeeded.
+ */
 int
-gpsVersion( GpsHandle gps )
+gps_version(gps_handle gps)
 {
-    int productId;
-    int softwareVersion;
-    char * productDescription;
+	int product_id;
+	int software_version;
+	char *product_description;
 
-    if ( gpsProduct( gps, &productId, &softwareVersion,
-		     &productDescription ) ) {
-	if ( gpsDebug( gps ) ) {
-	    warnx( "can't get gps version info" );
+	if (gps_product(gps, &product_id, &software_version,
+			&product_description)) {
+		gps_printf(gps, 1, "can't get gps version info\n");
+		return -1;
 	}
-	return -1;
-    }
-    printf( "[product %d, version %d: %s]\n", productId, softwareVersion,
-	    productDescription ? productDescription : "unknown" );
-    if ( productDescription ) {
-	free( productDescription );
-    }
+	printf("[product %d, version %d: %s]\n", product_id, software_version,
+	       product_description ? product_description : "unknown");
+	if (product_description)
+		free(product_description);
 
-    /* Grab the protocol capabilities packet if it is there so it doesn't
-       screw up anything else.  We don't use it.  Some units send it
-       every time the product description is requested. */
+	/* Grab the protocol capabilities packet if it is there so it doesn't
+	   screw up anything else.  We don't use it.  Some units send it
+	   every time the product description is requested. */
 
-    gpsProtocolCap( gps );
-    return 1;
+	gps_protocol_cap(gps);
+	return 1;
 }
