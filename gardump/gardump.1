@@ -1,0 +1,101 @@
+.\"	$Id: gardump.1,v 1.1 1998/05/12 05:01:16 marc Exp $
+.\"
+.\"	Copyright (c) 1998 Marco S. Hyman
+.\"
+.\"	Permission to copy all or part of this material for any purpose is
+.\"	granted provided that the above copyright notice and this paragraph
+.\"	are duplicated in all copies.  THIS SOFTWARE IS PROVIDED ``AS IS''
+.\"	AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT
+.\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+.\"	FOR A PARTICULAR PURPOSE.
+.\"
+.Dd May 7, 1998
+.Dt GARDUMP 1
+.Os SNAFU\ Software
+.Sh NAME
+.Nm gardump
+.Nd dump waypoints, routes, and tracks from a Garmin GPS unit
+.Sh SYNOPSIS
+.Nm
+.Op Fl d Ar debug-level
+.Op Fl wrt
+.Op Fl p Ar port
+.Sh DESCRIPTION
+.Nm
+will dump (retrieve) waypoint, route, and/or tracking information
+from a Garmin GPS unit sending the data to standard out in a
+readable format.  The output can be re-directed to a file, massaged
+with your favorite text editor, and then sent back to the GPS
+unit using the
+.Xr garload 1
+program.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d Ar debug-level
+Enable various levels of debugging output.  Without this option
+debugging is disabled and only critical errors are written to
+stderr.  Additional debug output at the various levels are:
+.Bl -tag -width Ds
+.It 1
+Write all error messages to stderr.
+.It 2
+Write status messages to stderr.
+.It 3
+Write Garmin application protocol status to stderr.
+.It 4
+Perform a hex dump of all data going in and out of the Garmin
+layer 2 protocol machine.  Data is written to stdout.
+.It 5
+Perform a hex dump of all data read from/written to the GPS
+unit.
+.El
+.It Fl w
+Retrieve waypoints and write them to stdout.
+.It Fl r
+Retrieve routes and write them to stdout.
+.It Fl t
+Retrieve the track log and write it to stdout.
+.It Fl p Ar port
+Use
+.Ar port
+as the device connected to the GPS unit.  The default port is a
+compile time option.
+.El
+.Pp
+If no options are given
+.Nm
+will retrieve waypoints, routes, and tracks, in that order.  All
+are written to stdout.
+.\".Sh ENVIRONMENT
+.\".Sh FILES
+.Sh EXAMPLES
+The command:
+.Bd -literal -offset indent
+gardump -r
+
+.Ed
+results in the output
+.Bd -literal -offset indent
+[routes, 7 records]
+**0 HOME-DUARTE
+HOME   -36.108810 +122.345230    10/3 CRTD 16:35 17-NOV-97
+MOMDAD -36.182732 +123.922882    10/5 CRTD 19:29 18-NOV-97
+DUARTE -37.246422 +123.794441    18/3 CRTD 07:46 01-MAR-98
+**1 HOME-GARMIN
+HOME   -36.108810 +122.345230    10/3 CRTD 16:35 17-NOV-97
+GARMIN -37.449306  +96.205276    18/3 GARMIN - U.S.A.
+[end transfer, 7/7 records]
+
+.Ed
+.\".SH DIAGNOSTICS
+.Sh SEE ALSO
+.Xr garload 1
+.\".Sh HISTORY
+.Sh AUTHORS
+Marco S. Hyman using information from the published GARMIN GPS Interface
+Specification, dated May 6, 1998.
+.Sh BUGS
+Only tested with a Garmin GPS III using OpenBSD 2.3 running on
+a SPARC and a Pentium.  May not work with other GPS units or
+operating systems.
