@@ -1,3 +1,14 @@
+Sat Dec 15 16:45:20 2001  Marco S Hyman  <marc@snafu.org>
+
+	* Makefile.inc: bump version to 1.7
+
+	* GNUmakefile.inc: bump version to 1.7
+
+	* lib/gpsprint.c: Include string.h for memxxx prototypes.
+
+	* All files with a copyright statement: the program has
+	explicitly been placed in the public domain.
+
 Mon Jun 25 12:35:42 2001  Marco S Hyman  <marc@snafu.org>
 
 	* lib/gps1.c: Define Linux and BSD as SIO_TYPE values

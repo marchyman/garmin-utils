@@ -1,15 +1,7 @@
 /*
- *	$snafu: gpsprint.c,v 1.9 2001/07/09 22:46:02 marc Exp $
+ *	$snafu: gpsprint.c,v 1.10 2001/12/16 00:56:16 marc Exp $
  *
- *	Copyright (c) 1998 Marco S. Hyman
- *
- *	Permission to copy all or part of this material with or without
- *	modification for any purpose is granted provided that the above
- *	copyright notice and this paragraph are duplicated in all copies.
- *
- *	THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- *	IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- *	WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *	Placed in the Public Domain by Marco S. Hyman
  */
 
 #include <sys/types.h>
@@ -17,6 +9,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <err.h>
+#include <string.h>
 
 #include "gpsproto.h"
 #include "gps1.h"

@@ -1,18 +1,9 @@
-$snafu: README,v 1.7 2001/06/19 04:36:46 marc Exp $
+$snafu: README,v 1.8 2001/12/16 00:56:15 marc Exp $
 
 GARMIN upload/download utilities for the Garmin GPS 12, 12XL, 48, III, and
 III+ units.  These compile/work on OpenBSD and Linux.  They may compile/work
-on other *BSD based systems.  All code is:
-
-	Copyright (c) 1998, 1999 Marco S. Hyman
-
-	Permission to copy all or part of this material with or without
-	modification for any purpose is granted provided that the above
-	copyright notice and this paragraph are duplicated in all copies.
-
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
-	IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
-	WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+on other *BSD based systems.  All original code is placed in the Public Domain
+by its author, Marco S Hyman.
 
 GNUmakefiles and Linux support was added by Vladislav Zavjalov,
 <sla@zav.mccme.ru>.  Grigory Pupkov, <pupkov@mccme.ru> added code

@@ -1,15 +1,7 @@
 /*
- *	$snafu: garload.c,v 1.7 2001/06/19 04:36:46 marc Exp $
+ *	$snafu: garload.c,v 1.8 2001/12/16 00:56:15 marc Exp $
  *
- *	Copyright (c) 1998 Marco S. Hyman
- *
- *	Permission to copy all or part of this material with or without
- *	modification for any purpose is granted provided that the above
- *	copyright notice and this paragraph are duplicated in all copies.
- *
- *	THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- *	IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- *	WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *	Placed in the Public Domain by 1998 Marco S. Hyman
  */
 
 #include <stdio.h>

@@ -1,15 +1,7 @@
 /*
- *	$snafu: gps2.h,v 1.4 2001/06/13 22:21:26 marc Exp $
+ *	$snafu: gps2.h,v 1.5 2001/12/16 00:56:16 marc Exp $
  *
- *	Copyright (c) 1998 Marco S. Hyman
- *
- *	Permission to copy all or part of this material with or without
- *	modification for any purpose is granted provided that the above
- *	copyright notice and this paragraph are duplicated in all copies.
- *
- *	THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- *	IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- *	WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *	Placed in the Public Domain by Marco S. Hyman
  */
 
     /*

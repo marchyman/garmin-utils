@@ -1,4 +1,4 @@
-# $snafu: Makefile.inc,v 1.10 2001/06/26 23:41:15 marc Exp $
+# $snafu: Makefile.inc,v 1.11 2001/12/16 00:56:15 marc Exp $
 #
 # Default installation directories
 #
@@ -12,7 +12,7 @@ SERIAL_PORT?=	-DDEFAULT_PORT=\"/dev/gps\"
 
 # Program version
 #
-VERSION?=	-DVERSION=\"1.6\"
+VERSION?=	-DVERSION=\"1.7\"
 
 # Which serial I/O code to use, possible choices are
 #   BSD	   for BSD-based systems
