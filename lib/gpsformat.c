@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.9 2003/04/11 01:21:49 marc Exp $
+ *	$snafu: gpsformat.c,v 1.10 2003/04/11 21:17:15 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -13,13 +13,17 @@
 
 #include "gpslib.h"
 
-typedef enum {
-    START,
-    WAYPOINTS,
-    ROUTES,
-    TRACKS
-} FormatState;
+/*
+ * decode state values
+ */
+enum {
+	START,
+	WAYPOINTS,
+	ROUTES,
+	TRACKS
+};
 
+#if 0
 static FormatState
 scanType( GpsHandle gps, unsigned char * buf )
 {
@@ -308,52 +312,66 @@ scanTrack( GpsHandle gps, unsigned char * buf )
     return buildListEntry( data, len );
 }
 
-    /*
-     * Convert a given file, assumed to be in the same format output
-     * by gpsprint, to lists of gps records ready to upload to a gps
-     * unit.
-     */
-    /*
-     * Scan stdin, building GPS upload lists.  Return pointer to
-     * GpsLists, if one or more lists created, otherwise return
-     * a null pointer.
-     *
-     * The lists and each item from the list come from the heap and
-     * should be released.
-     */
+#endif
 
-GpsLists *
-gpsFormat( GpsHandle gps, FILE * stream )
+
+/*
+ * Convert a given file, assumed to be in the same format output
+ * by gpsprint, to lists of gps records ready to upload to a gps
+ * unit.
+ *
+ * The lists and each item from the list come from the heap and
+ * should be released.
+ */
+struct gps_lists *
+gps_format(gps_handle gps, FILE *stream)
 {
-    unsigned char buf[ GPS_BUF_LEN ];
-    GpsLists * lists = 0;
-    GpsLists * cur = 0;
-    GpsListEntry * entry = 0;
-    FormatState state = START;
-    int ix;
+	unsigned char buf[GPS_BUF_LEN];
+	struct gps_lists *lists = 0;
+	struct gps_lists *cur = 0;
+	struct gps_list_entry *entry = 0;
+	int state = START;
+	int ix;
 
-    while ( fgets( buf, sizeof buf, stream ) ) {
-	/* skip any leading whitespace */
-	for ( ix = 0; buf[ ix ]; ix += 1 ) {
-	    if ( ! isspace( buf[ ix ] ) ) {
-		break;
-	    }
+	while (fgets(buf, sizeof buf, stream)) {
+
+		/* skip any leading whitespace */
+		for (ix = 0; buf[ix]; ix += 1)
+			if (! isspace(buf[ix]))
+				break;
+
+		/* Ignore comments and/or empty lines */
+		if (!buf[ix] || buf[ix] == '#' )
+			continue;
+
+		/* check for list terminator */
+		if (buf[ix] == '[' && strncmp(&buf[ix], "[end", 4) == 0) {
+			gps_printf(gps, 2, "...end\n");
+			state = START;
+		}
+
+		/* process the content of the buffer according to
+		   the current state */
+		switch ( state ) {
+		case START:
+		case WAYPOINTS:
+		case ROUTES:
+		case TRACKS:
+		}
+
+		/* If entry is not null link it into the current list */
+		if (entry != NULL) {
+			if (cur->list->head == NULL)
+				cur->list->head = entry;
+			else
+				cur->list->tail->next = entry;
+			cur->list->tail = entry;
+			cur->list->count += 1;
+		}
 	}
 
-	/* Ignore comments and/or empty lines */
-	if (( ! buf[ ix ] ) || ( buf[ ix ] == '#' )) {
-	    continue;
-	}
+#if 0
 
-	/* check for list terminator */
-	if (( buf[ ix ] == '[' ) && (strncmp( &buf[ ix ], "[end", 4 ) == 0 )) {
-	    if ( gpsDebug( gps ) > 1 ) {
-		warnx( "...end" );
-	    }
-	    state = START;
-	}
-
-	switch ( state ) {
 	  case START:
 	    state = scanType( gps, &buf[ ix ] );
 	    if ( state != START ) {
@@ -416,6 +434,7 @@ gpsFormat( GpsHandle gps, FILE * stream )
 	    warnx( "Missing [end transfer...] record, possible data loss" );
 	}
     }
+#endif
 
     return lists;
 }
