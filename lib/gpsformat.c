@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsformat.c,v 1.26 2003/06/12 16:45:00 marc Exp $
+ * $snafu: gpsformat.c,v 1.27 2003/09/27 05:50:33 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -611,8 +611,8 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 			sscanf(&beg[1], "%d", link);
 			break;
 		default:
-			gps_printf(gps, 1, __func__ ": unknown field ->%s\n",
-				   &beg[-1]);
+			gps_printf(gps, 1, "%s: unknown field ->%s\n",
+				   __func__, &beg[-1]);
 			continue;
 		}
 	}
@@ -990,8 +990,8 @@ gps_format(gps_handle gps, FILE *stream)
 		case START:
 			state = scan_state(&buf[ix]);
 			if (state != START) {
-				gps_printf(gps, 3, __func__ ": processing %s\n",
-					   &buf[ix]);
+				gps_printf(gps, 3, "%s: processing %s\n",
+					   __func__, &buf[ix]);
 				gps_list_new(&lists, &cur, state);
 			}
 			continue;

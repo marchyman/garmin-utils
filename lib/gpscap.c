@@ -1,5 +1,5 @@
 /*
- * $snafu: gpscap.c,v 1.14 2003/06/12 16:45:00 marc Exp $
+ * $snafu: gpscap.c,v 1.15 2003/09/27 05:50:33 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -31,7 +31,7 @@ gps_cap_parse(gps_handle gps, const u_char *data, int datalen)
 	int proto = 0;
 	int dix = 0;
 
-	gps_printf(gps, 3, __func__ ":\n");
+	gps_printf(gps, 3, "%s:\n", __func__);
 	if (data[0] == p_cap) {
 		for (ix = 1; ix + 2 < datalen; ix += 3) {
 			tag = data[ix];
@@ -88,8 +88,8 @@ gps_cap_parse(gps_handle gps, const u_char *data, int datalen)
 		}
 		gps_printf(gps, 3, "\n");
 	} else
-		gps_printf(gps, 2, __func__ ": unknown packet type %d\n",
-			   data[0]);
+		gps_printf(gps, 2, "%s: unknown packet type %d\n",
+			   __func__, data[0]);
 }
 
 /*
@@ -120,16 +120,16 @@ gps_protocol_cap(gps_handle gps)
 	gps_set_trk_type(gps, D300);
 
 	if (! data) {
-		gps_printf(gps, 0, __func__ ": no memory\n");
+		gps_printf(gps, 0, "%s: no memory\n", __func__);
 		return -1;
 	}
-	gps_printf(gps, 3, __func__ ": recv\n");
+	gps_printf(gps, 3, "%s: recv\n", __func__);
 	while (retries--) {
 		datalen = GPS_FRAME_MAX;
 		switch (gps_recv(gps, RCV_TO, data, &datalen)) {
 		case -1:
 			gps_send_nak(gps, *data);
-			gps_printf(gps, 3, __func__ ": retry\n");
+			gps_printf(gps, 3, "%s: retry\n", __func__);
 			break;
 		case 0:
 			goto done;
@@ -137,7 +137,7 @@ gps_protocol_cap(gps_handle gps)
 			gps_cap_parse(gps, data, datalen);
 			gps_send_ack(gps, *data);
 			free(data);
-			gps_printf(gps, 3, __func__ ": rcvd\n");
+			gps_printf(gps, 3, "%s: rcvd\n", __func__);
 			return 0;
 		}
 	}

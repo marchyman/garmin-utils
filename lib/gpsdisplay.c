@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsdisplay.c,v 1.12 2003/06/12 16:45:00 marc Exp $
+ * $snafu: gpsdisplay.c,v 1.13 2003/09/27 05:50:33 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -10,6 +10,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <strings.h>
+
+#ifdef LINUX
+/* Linux puts memset(3) in string.h */
+#include <string.h>
+#endif
+
 
 #include "gpslib.h"
 

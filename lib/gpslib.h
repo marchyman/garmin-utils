@@ -1,5 +1,5 @@
 /*
- * $snafu: gpslib.h,v 1.11 2003/06/12 16:45:00 marc Exp $
+ * $snafu: gpslib.h,v 1.12 2003/09/27 05:50:33 marc Exp $
  *
  * Public Domain, 2003, Marco S Hyman <marc@snafu.org>
  */
@@ -145,4 +145,14 @@ void	gps_set_wpt_type(gps_handle, int);
 int	gps_version(gps_handle);
 int	gps_wait(gps_handle, u_char, int);
 int	gps_write(gps_handle, const u_char *, int);
+
+/*
+ * What to do?  The strlcpy() code is provided for versions of Linux which 
+ * do not have strlcpy.  But that means that the prototype is not in <string.h>
+ * and the strict compiler options for gcc treat no prototype as an error 
+ * Solution: Add a prototype here.
+ */
+#ifdef LINUX
+size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif
 

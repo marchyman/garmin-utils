@@ -1,4 +1,4 @@
-$snafu: README,v 1.13 2003/06/14 23:45:28 marc Exp $
+$snafu: README,v 1.14 2003/09/27 05:50:32 marc Exp $
 
 *****
 THE DATA FORMAT OF THIS VERSION IS INCOMPATIBLE WITH VERSIONS PRIOR TO 1.91.
@@ -51,7 +51,7 @@ To install (Linux)
 
  The code assumes that Linux does not have strlcpy, so the bsd version
  is included in libgarmin.   If your version of Linux has strlcpy remove
- references to strlcpy.o from lib/GNUmakefile.
+ references to strlcpy.o from lib/GNUmakefile and lib/gpslib.h.
 
 See the man pages for instructions on use.  Unless changed in step 1,
 both programs look for "/dev/tty00" (BSD) or "/dev/gps" (Linux).

@@ -1,12 +1,16 @@
 /*
- * $snafu: gpsprint.c,v 1.28 2003/06/12 16:45:00 marc Exp $
+ * $snafu: gpsprint.c,v 1.29 2003/09/27 05:50:33 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
 
 #include <sys/types.h>
 
+#ifndef LINUX
 #include <machine/endian.h>
+#else
+#include <endian.h>
+#endif
 
 #include <err.h>
 #include <stdio.h>
@@ -15,6 +19,7 @@
 #include <time.h>
 
 #include "gpslib.h"
+
 
 /*
  * Functions to `print' gps data.  The given packets are formatted

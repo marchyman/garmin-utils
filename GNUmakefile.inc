@@ -1,4 +1,4 @@
-# $snafu: GNUmakefile.inc,v 1.10 2003/06/12 16:44:59 marc Exp $
+# $snafu: GNUmakefile.inc,v 1.11 2003/09/27 05:50:32 marc Exp $
 #
 # Default installation directories
 #
@@ -16,11 +16,19 @@ CFLAGS+=	-DDEFAULT_PORT=\"/dev/gps\"
 #
 CFLAGS+=	-DSIO_TYPE=Linux
 
+# Flag to use Linux-specific alternatives:
+#	memcpy() lives in <string.h>,
+#	location of <endian.h>
+#	prototyping for strlcpy()
+#
+CFLAGS+=	-DLINUX
+
 # Program version
 #
-CFLAGS+=	-DVERSION=\"1.92\"
+CFLAGS+=	-DVERSION=\"1.93\"
 
 # Other C flags
 #
 CFLAGS+= -I../lib
 CFLAGS+= -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Werror
+

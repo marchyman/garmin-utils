@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsprod.c,v 1.9 2003/06/12 16:45:00 marc Exp $
+ * $snafu: gpsprod.c,v 1.10 2003/09/27 05:50:33 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -38,11 +38,11 @@ gps_product(gps_handle gps, int *product_id, int *software_version,
 	u_char *data = malloc(GPS_FRAME_MAX);
 
 	if (! data) {
-		gps_printf(gps, 0, __func__ ": no memory\n");
+		gps_printf(gps, 0, "%s: no memory\n", __func__);
 		return -1;
 	}
 
-	gps_printf(gps, 3, __func__ ": send\n");
+	gps_printf(gps, 3, "%s: send\n", __func__);
 
 	while (retries--) {
 		if (gps_send_wait(gps, &rqst, 1, 5) == 1) {
@@ -58,17 +58,17 @@ gps_product(gps_handle gps, int *product_id, int *software_version,
 							strdup(&data[5]);
 					else
 						*product_description = 0;
-					gps_printf(gps, 3, __func__
-						   ": rcvd\n");
+					gps_printf(gps, 3, 
+						   "%s: rcvd\n", __func__);
 					free(data);
 					return 0;
 				}
 			}
 			gps_send_nak(gps, *data);
-			gps_printf(gps, 3, __func__ ": retry\n");
+			gps_printf(gps, 3, "%s: retry\n", __func__);
 		}
 	}
-	gps_printf(gps, 1, __func__ ": fail\n");
+	gps_printf(gps, 1, "%s: fail\n", __func__);
 	free(data);
 	return -1;
 }

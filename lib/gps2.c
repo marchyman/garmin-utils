@@ -1,5 +1,5 @@
 /*
- * $snafu: gps2.c,v 1.15 2003/06/12 16:45:00 marc Exp $
+ * $snafu: gps2.c,v 1.16 2003/09/27 05:50:33 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -34,7 +34,7 @@ gps_frame(const u_char * buf, int *cnt)
 	u_char *work = malloc(2 * *cnt + 10);
 
 	if (! work) {
-		warn(__func__ ": no memory");
+		warn( "%s: no memory", __func__);
 		return 0;
 	}
 
@@ -164,10 +164,10 @@ gps_recv(gps_handle gps, int to, u_char *buf, int * cnt)
 
 		switch (stat) {
 		case -1:
-			gps_printf(gps, 2, __func__ ": sync error\n");
+			gps_printf(gps, 2, "%s: sync error\n", __func__);
 			return -1;
 		case 0:
-			gps_printf(gps, 2, __func__ ": timeout\n");
+			gps_printf(gps, 2, "%s: timeout\n", __func__);
 			return 0;
 		case 1:
 			break;
@@ -186,7 +186,7 @@ gps_recv(gps_handle gps, int to, u_char *buf, int * cnt)
 		do {
 			stat = gps_read(gps, ptr, READ_TO);
 			if (stat != 1) {
-				gps_printf(gps, 2, __func__ ": frame error\n");
+				gps_printf(gps, 2, "%s: frame error\n", __func__);
 				return -1;
 			}
 			if (dle_seen) {
@@ -222,9 +222,9 @@ gps_recv(gps_handle gps, int to, u_char *buf, int * cnt)
 			   Add in the packet type to the expected length. */
 			rlen += 1;
 			if (rlen != len)
-				gps_printf(gps, 1, __func__ ": bad frame len, "
+				gps_printf(gps, 1, "%s: bad frame len, "
 					   "%d expected, %d received\n",
-					   rlen, len);
+					   __func__, rlen, len);
 			if ((sum & 0xff) == 0) {
 				/* good checksum, update len rcvd and return */
 				*cnt = len;
@@ -239,9 +239,9 @@ gps_recv(gps_handle gps, int to, u_char *buf, int * cnt)
 			}
 		} else {
 			/* frame too large, return error */
-			gps_printf(gps, 1, __func__
-				   ": frame too large for %d byte buffer\n",
-				   *cnt);
+			gps_printf(gps, 1, 
+				   "%s: frame too large for %d byte buffer\n",
+				   __func__, *cnt);
 			return -1;
 		}
 	}

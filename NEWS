@@ -1,6 +1,8 @@
-# $snafu: NEWS,v 1.9 2003/06/14 23:45:28 marc Exp $
+# $snafu: NEWS,v 1.10 2003/09/27 05:50:32 marc Exp $
 
 List of changes/additions (for 1.9x)
+
+ - Linux support fixed from Eric Zager
 
  - NetBSDisms from Greg Troxel
 

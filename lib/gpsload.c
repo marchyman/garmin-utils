@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsload.c,v 1.14 2003/06/12 16:45:00 marc Exp $
+ * $snafu: gpsload.c,v 1.15 2003/09/27 05:50:33 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -27,7 +27,7 @@ start_load(gps_handle gps, int records)
 {
 	u_char buf[4];
 
-	gps_printf(gps, 3, __func__ ": send\n");
+	gps_printf(gps, 3, "%s: send\n", __func__);
 	buf[0] = p_xfr_begin;
 	buf[1] = (u_char) records;
 	buf[2] = (u_char) (records >> 8);
@@ -50,7 +50,7 @@ end_load(gps_handle gps, int type)
 {
 	u_char buf[4];
 
-	gps_printf(gps, 3, __func__ ": send\n");
+	gps_printf(gps, 3, "%s: send\n", __func__);
 	buf[0] = p_xfr_end;
 	buf[1] = (u_char) type;
 	buf[2] = (u_char) (type >> 8);
@@ -62,7 +62,7 @@ cancel_load(gps_handle gps)
 {
 	u_char buf[4];
 
-	gps_printf(gps, 3, __func__ ": send\n");
+	gps_printf(gps, 3, "%s: send\n", __func__);
 	buf[0] = p_xfr_end;
 	buf[1] = (u_char) CMD_ABORT_XFR;
 	buf[2] = 0;

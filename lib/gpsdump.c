@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsdump.c,v 1.11 2003/06/12 16:45:00 marc Exp $
+ * $snafu: gpsdump.c,v 1.12 2003/09/27 05:50:33 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -34,7 +34,7 @@ gps_cmd(gps_handle gps, enum gps_cmd_id cmd)
 	u_char *data = malloc(GPS_FRAME_MAX);
 
 	if (data == NULL) {
-		gps_printf(gps, 0, __func__ ": no memory\n");
+		gps_printf(gps, 0, "%s: no memory\n", __func__);
 		return -1;
 	}
 
@@ -42,7 +42,7 @@ gps_cmd(gps_handle gps, enum gps_cmd_id cmd)
 	cmd_frame[1] = cmd;
 	cmd_frame[2] = 0;
 	
-	gps_printf(gps, 3, __func__ ": send command %d\n", cmd);
+	gps_printf(gps, 3, "%s: send command %d\n", __func__, cmd);
 
 	while (retries--) {
 		if (gps_send_wait(gps, cmd_frame, 3, 5) == 1) {
@@ -67,9 +67,9 @@ gps_cmd(gps_handle gps, enum gps_cmd_id cmd)
 			free(data);
 			return 1;
 		}
-		gps_printf(gps, 3, __func__ ": retry\n");
+		gps_printf(gps, 3, "%s: retry\n", __func__);
 	}
-	gps_printf(gps, 1, __func__ ": failed");
+	gps_printf(gps, 1, "%s: failed", __func__);
 	free(data);
 	return -1;
 }
