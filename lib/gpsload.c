@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsload.c,v 1.2 2001/05/02 00:34:54 marc Exp $
+ *	$snafu: gpsload.c,v 1.3 2001/06/12 17:27:13 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -33,7 +33,7 @@ startLoad( GpsHandle gps, int records )
     }
     buf[ 0 ] = xfrBegin;
     buf[ 1 ] = (unsigned char) records;
-    buf[ 2 ] = (unsigned char) ( records << 8 );
+    buf[ 2 ] = (unsigned char) ( records >> 8 );
     return gpsSendWait( gps, buf, 3 );
 }
 
@@ -59,7 +59,7 @@ endLoad( GpsHandle gps, int loadType )
     }
     buf[ 0 ] = xfrEnd;
     buf[ 1 ] = (unsigned char) loadType;
-    buf[ 2 ] = (unsigned char) ( loadType << 8 );
+    buf[ 2 ] = (unsigned char) ( loadType >> 8 );
     return gpsSendWait( gps, buf, 3 );
 }
 

@@ -1,3 +1,9 @@
+Tue Jun 12 10:24:49 2001  Marco S Hyman  <marc@snafu.org>
+
+	* lib/gpsload.c (startLoad): shift to get the high order byte,
+	bug fix from Max Ushakov via Grigory Pupkov <pupkov@mccme.ru>.
+	(endLoad): ditto
+	
 Tue May  1 17:17:08 2001  Marco S Hyman  <marc@snafu.org>
 
 	* GNUmakefile, GNUmakefile.inc, lib/GNUmakefile,
