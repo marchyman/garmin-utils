@@ -1,4 +1,4 @@
-# $snafu: GNUmakefile.inc,v 1.1 2001/05/02 00:34:51 marc Exp $
+# $snafu: GNUmakefile.inc,v 1.2 2001/05/03 16:43:41 marc Exp $
 #
 # Default installation directories
 #
@@ -8,29 +8,25 @@ MANDIR =  ${PREFIX}/man
 
 # Name of GPS device
 #
-CFLAGS = -DDEFAULT_PORT=\"/dev/gps\"
+CFLAGS+=	-DDEFAULT_PORT=\"/dev/gps\"
 
-# Operation system
-# Possible variants are 
-#  0 for BSD and 
-#  1 for Linux
-# see lib/gps1.c file.
+# Which serial I/O code to use, possible choices are
+#   0 for BSD-based systems
+#   1 for Linux
 #
-CFLAGS += -DOS=1
+CFLAGS+=	-DSIO_TYPE=1
 
-# Type of GPS unit
-# possible choises are
-# 0   for Garmin GPS III
-# 1   for Garmin GPS 12/12XL
+# Model of the GPS unit, possible choices are
+#   0 for Garmin GPS III/III+
+#   1 for Garmin GPS 12/12XL/48
 #
-CFLAGS += -DGPS=1
-
+CFLAGS+=	-DGPS=0
 
 # Program version
 #
-CFLAGS += -DVERSION=\"1.3\"
+CFLAGS+=	-DVERSION=\"1.4\"
 
 # Other C flags
 #
-CFLAGS += -I../lib
-CFLAGS += -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Werror
+CFLAGS+= -I../lib
+CFLAGS+= -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Werror
