@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.21 2003/04/19 02:23:04 marc Exp $
+ *	$snafu: gpsformat.c,v 1.22 2003/04/23 23:07:44 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -13,6 +13,8 @@
 #include <string.h>
 
 #include "gpslib.h"
+
+#define GPS_STRING_MAX	51
 
 /*
  * decode states
@@ -39,7 +41,7 @@ scan_state(u_char *buf)
 	int state = START;
 	if (*buf == '[') {
 		if (strncmp(buf, RTE_HDR, sizeof RTE_HDR - 1) == 0)
-			state =ROUTES;
+			state = ROUTES;
 		else if (strncmp(buf, TRK_HDR, sizeof TRK_HDR - 1) == 0)
 			state = TRACKS;
 		else if (strncmp(buf, WPT_HDR, sizeof WPT_HDR - 1) == 0)
@@ -75,10 +77,9 @@ double2semicircle(double f, u_char *b)
 
 /*
  * Append data to a buffer. The rules are:
- *	1) data inserted is upper case
- *	2) newline is converted to null
- *	3) If data len less than buffer len null terminate.
- *	4) pad remainder of buffer with spaces
+ *	1) newline is converted to null
+ *	2) If data len less than buffer len null terminate.
+ *	3) pad remainder of buffer with spaces
  * Returns pointer to buffer after data has been added.
  */
 static u_char *
@@ -88,7 +89,7 @@ add_string(u_char *buf, u_char *data, int len)
 		if (*data == '\n')
 			*data = 0;
 		if (*data)
-			*buf++ = toupper(*data++);
+			*buf++ = *data++;
 		else {
 			*buf++ = 0;
 			if (len) {
@@ -344,7 +345,8 @@ d107_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 }
 
 static struct gps_list_entry *
-d108_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
+d108_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
+	 int disp)
 {
 	u_char *data;
 	int len;
@@ -405,16 +407,27 @@ d108_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
 	data[len++] = ' ';
 
 	/* byte 49-99: ident (max 51 characters) */
-	tlen = strlcpy(&data[len], cmnt, 51);
-	if (++tlen > 51)
-		tlen = 51;
+	tlen = strlcpy(&data[len], name, GPS_STRING_MAX);
+	if (++tlen > GPS_STRING_MAX)
+		tlen = GPS_STRING_MAX;
 	len += tlen;
+
+	/* comment follows name (max 51 characters) */
+	tlen = strlcpy(&data[len], cmnt, GPS_STRING_MAX);
+	if (++tlen > GPS_STRING_MAX)
+		tlen = GPS_STRING_MAX;
+	len += tlen;
+
+	data[len++] = 0;	/* facility */
+	data[len++] = 0;	/* city */
+	data[len++] = 0;	/* address */
+	data[len++] = 0;	/* cross road */
 
 	return build_list_entry(data, len);
 }
 
 static struct gps_list_entry *
-d109_wpt(int state, double lat, double lon, char *cmnt, int sym,
+d109_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 	 int disp)
 {
 	u_char *data;
@@ -454,7 +467,7 @@ d109_wpt(int state, double lat, double lon, char *cmnt, int sym,
 	len += 4;
 
 	/* byte 29-32: longitude */
-	double2semicircle(lat, &data[len]);
+	double2semicircle(lon, &data[len]);
 	len += 4;
 
 	/* byte 33-36: alt */
@@ -481,15 +494,21 @@ d109_wpt(int state, double lat, double lon, char *cmnt, int sym,
 	data[len++] = (u_char) 0xff;
 	data[len++] = (u_char) 0xff;
 
-	/* byte 53-103: ident (max 51 characters) */
-	tlen = strlcpy(&data[len], cmnt, 51);
-	if (++tlen > 51)
-		tlen = 51;
+	/* byte 53-103: ident (max GPS_STRING_MAX characters) */
+	tlen = strlcpy(&data[len], name, GPS_STRING_MAX);
+	if (++tlen > GPS_STRING_MAX)
+		tlen = GPS_STRING_MAX;
 	len += tlen;
+
+	/* comment follows name (max 51 characters) */
+	tlen = strlcpy(&data[len], cmnt, GPS_STRING_MAX);
+	if (++tlen > GPS_STRING_MAX)
+		tlen = GPS_STRING_MAX;
+	len += tlen;
+
 
 	/* Add null bytes for the empty fields comment, facility, city
 	   address, and cross road */
-	data[len++] = 0;	/* comment */
 	data[len++] = 0;	/* facility */
 	data[len++] = 0;	/* city */
 	data[len++] = 0;	/* address */
@@ -502,34 +521,65 @@ d109_wpt(int state, double lat, double lon, char *cmnt, int sym,
  * decode the buffer as a waypoint and format according to the required
  * waypoint type.   Data is expected to be in this format
  *
- *	name lat long [altitude] sym/disp comments
+ *  lat long [A:altitude] [S:symbol] [D:display] [I:ident] [C:comment] [L:link]
  */
 static struct gps_list_entry *
 waypoints(gps_handle gps, u_char *buf, int state)
 {
 	struct gps_list_entry *entry = 0;
-	int result;
-	char name[8];		/* waypoint name */
-	double lat;		/* latitude */
-	double lon;		/* longitude */
-	int sym;		/* symbol */
-	int disp;		/* symbol display mode */
-	char comment[44];	/* comment */
+	double lat;			/* latitude */
+	double lon;			/* longitude */
+	int sym;			/* symbol */
+	int disp;			/* symbol display mode */
+	int link;			/* route link code */
+	char name[GPS_STRING_MAX + 1];	/* waypoint name */
+	char cmnt[GPS_STRING_MAX + 1];	/* comment */
+
+	char *beg;
+	char *end;
+	int len;
 	int wpt;
 
-	/* break the input data up into its component fields */
-	result = sscanf(buf, "%6c %lf %lf %*f %d/%d %40s",
-			name, &lat, &lon, &sym, &disp, comment);
-	if (result != 6) {
-		result = sscanf(buf, "%6c %lf %lf %d/%d %40s",
-				name, &lat, &lon, &sym, &disp, comment);
-		if (result != 6) {
-			gps_printf(gps, 1, __func__ ": bad format: %s\n", buf);
-			return 0;
+	/* Latitude and longitude */
+	sscanf(buf, "%lf %lf", &lat, &lon);
+
+	/* key:value pairs */
+	for (beg = strchr(buf, ':'); beg; beg = end) {
+		end = strchr(beg + 1, ':');
+		if (end == NULL)
+			len = strlen(beg + 1);
+		else
+			len = end - beg - 2;
+		if (len > GPS_STRING_MAX)
+			len = GPS_STRING_MAX;
+		switch (toupper(beg[-1])) {
+		case 'A':
+			/* altitude ignored */
+			break;
+		case 'S':
+			/* symbol */
+			sscanf(&beg[1], "%d", &sym);
+			break;
+		case 'D':
+			/* display mode */
+			sscanf(&beg[1], "%d", &disp);
+			break;
+		case 'I':
+			strlcpy(name, &beg[1], len + 1);
+			break;
+		case 'C':
+			strlcpy(cmnt, &beg[1], len + 1);
+			break;
+		case 'L':
+			/* route link code */
+			sscanf(&beg[1], "%d", &link);
+			break;
+		default:
+			gps_printf(gps, 1, __func__ ": unknown field ->%s\n",
+				   &beg[-1]);
+			continue;
 		}
 	}
-	name[6] = 0;
-	comment[40] = 0;
 
 	/* Now figure out which waypoint format is being used and
 	   call the appropriate routine */
@@ -545,34 +595,34 @@ waypoints(gps_handle gps, u_char *buf, int state)
 	}
 	switch (wpt) {
 	case D100:
-		entry = d100_wpt(state, name, lat, lon, comment);
+		entry = d100_wpt(state, name, lat, lon, cmnt);
 		break;
 	case D101:
-		entry = d101_wpt(state, name, lat, lon, comment, sym);
+		entry = d101_wpt(state, name, lat, lon, cmnt, sym);
 		break;
 	case D102:
-		entry = d102_wpt(state, name, lat, lon, comment, sym);
+		entry = d102_wpt(state, name, lat, lon, cmnt, sym);
 		break;
 	case D103:
-		entry = d103_wpt(state, name, lat, lon, comment, sym, disp);
+		entry = d103_wpt(state, name, lat, lon, cmnt, sym, disp);
 		break;
 	case D104:
-		entry = d104_wpt(state, name, lat, lon, comment, sym, disp);
+		entry = d104_wpt(state, name, lat, lon, cmnt, sym, disp);
 		break;
 	case D105:
-		entry = d105_wpt(state, lat, lon, comment, sym);
+		entry = d105_wpt(state, lat, lon, cmnt, sym);
 		break;
 	case D106:
-		entry = d106_wpt(state, lat, lon, comment, sym);
+		entry = d106_wpt(state, lat, lon, cmnt, sym);
 		break;
 	case D107:
-		entry = d107_wpt(state, name, lat, lon, comment, sym, disp);
+		entry = d107_wpt(state, name, lat, lon, cmnt, sym, disp);
 		break;
 	case D108:
-		entry = d108_wpt(state, lat, lon, comment, sym, disp);
+		entry = d108_wpt(state, name, lat, lon, cmnt, sym, disp);
 		break;
 	case D109:
-		entry = d109_wpt(state, lat, lon, comment, sym, disp);
+		entry = d109_wpt(state, name, lat, lon, cmnt, sym, disp);
 		break;
 	default:
 		gps_printf(gps, 1, "unknown waypoint type %d\n", wpt);
@@ -597,7 +647,7 @@ routes(gps_handle gps, u_char *buf)
 	int result;
 	int rte = 0;
 	int class = -1;
-	char cmnt[52];
+	char cmnt[GPS_STRING_MAX + 1];
 
 	if (buf[1] == '*')
 		result = sscanf(buf, "**%d %51s", &rte, cmnt);
@@ -607,7 +657,7 @@ routes(gps_handle gps, u_char *buf)
 		gps_printf(gps, 1, __func__ ": bad format: %s\n", buf);
 		return 0;
 	}
-	cmnt[51] = 0;
+	cmnt[GPS_STRING_MAX] = 0;
 	gps_printf(gps, 3, "route %d %s/%s\n", rte, cmnt, class);
 
 	;;;
@@ -778,8 +828,13 @@ gps_format(gps_handle gps, FILE *stream)
 	struct gps_list_entry *entry = 0;
 	int state = START;
 	int ix;
+	char *p;
 
 	while (fgets(buf, sizeof buf, stream)) {
+
+		/* kill any trailing newline */
+		if ((p = strrchr(buf, '\n')) != NULL)
+			*p = 0;
 
 		/* skip any leading whitespace */
 		for (ix = 0; buf[ix]; ix += 1)

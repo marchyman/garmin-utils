@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.25 2003/04/23 20:48:19 marc Exp $
+ *	$snafu: gpsprint.c,v 1.26 2003/04/23 23:07:44 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -271,7 +271,7 @@ print_waypoint(const u_char *wpt, int len, int type)
 		printf("%10f %11f", lat, lon);
 
 		if (wi->alt_off)
-			alt = get_float(&wpt[wi->alt_off]);
+		alt = get_float(&wpt[wi->alt_off]);
 		else
 			alt = no_val.f;
 		if (alt != no_val.f)
@@ -282,8 +282,9 @@ print_waypoint(const u_char *wpt, int len, int type)
 			printf(" S:%ld", sym);
 
 		dsp = get_int(wpt, len, wi->disp_off, wi->disp_len);
-		if (dsp != -1)
+		if (dsp != -1) {
 			printf(" D:%ld", dsp);
+		}
 
 		if (wi->name_off) {
 			/* old style: fixed len name/comment */
