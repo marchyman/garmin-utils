@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.7 2001/12/16 00:56:16 marc Exp $
+ *	$snafu: gpsformat.c,v 1.8 2003/04/10 20:50:22 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -309,6 +309,20 @@ scanTrack( GpsHandle gps, unsigned char * buf )
 
     return buildListEntry( data, len );
 }
+
+    /*
+     * Convert a given file, assumed to be in the same format output
+     * by gpsprint, to lists of gps records ready to upload to a gps
+     * unit.
+     */
+    /*
+     * Scan stdin, building GPS upload lists.  Return pointer to
+     * GpsLists, if one or more lists created, otherwise return
+     * a null pointer.
+     *
+     * The lists and each item from the list come from the heap and
+     * should be released.
+     */
 
 GpsLists *
 gpsFormat( GpsHandle gps, FILE * stream )

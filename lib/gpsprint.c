@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.12 2003/04/10 18:58:27 marc Exp $
+ *	$snafu: gpsprint.c,v 1.13 2003/04/10 20:50:22 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -16,6 +16,12 @@
 #include "gps1.h"
 #include "gpsdump.h"
 #include "gpsprint.h"
+
+    /*
+     * Functions to `print' gps data.  The given packets are formatted
+     * and written to stdout.  Formatting varies according to the
+     * packet type.
+     */
 
     /*
      * GPS time is number of seconds from 12:00 AM Jan 1 1990.  Add this

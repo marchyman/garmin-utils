@@ -1,11 +1,7 @@
 /*
- *	$snafu: gps1.c,v 1.11 2003/04/10 18:58:26 marc Exp $
+ *	$snafu: gps1.c,v 1.12 2003/04/10 20:50:22 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
- */
-
-/*
- * This file implements Layer 1 of the Garmin GPS protocol.
  */
 
 #include <sys/types.h>
@@ -13,17 +9,16 @@
 #include <sys/uio.h>
 #include <sys/ioctl.h>
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-#include <errno.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <termios.h>
+#include <unistd.h>
 
-#include "gpsproto.h"
 #include "gpslib.h"
-#include "gpsdisplay.h"
 
 /*
  * Define the various serial I/O types
@@ -41,7 +36,7 @@ struct gps_state {
 	int		debug;		/* debugging level (set at open) */
 	int		fd;		/* fd of the open file */
 	char*		name;		/* name of the device */
-	int		wptType;	/* waypoint packet type */
+	int		wpt_type;	/* waypoint packet type */
 #if SIO_TYPE == BSD
 	struct termios	termios;	/* initial term settings */
 #elif SIO_TYPE == Linux
@@ -49,15 +44,15 @@ struct gps_state {
 #else
 #error Unknown SIO_TYPE value
 #endif
-	int		bufIx;		/* index into read buffer */
-	int		bufCnt;		/* number of bytes in read buffer */
-	unsigned char	buf[ GPS_BUF_LEN ];
-	int		wptWptType;	/* waypoint type in A1XX protocol */
-	int		rteWptType;	/* waypoint type in A2XX protocol */
-	int		rteRteHdr;	/* route header type in A2xx proto */
-	int		rteRteLink;	/* route link type in A2xx proto */
-	int		trkTrkType;	/* track point type in A3XX proto */
-	int		trkTrkHdr;	/* track hdr type in A3XX proto */
+	int		bufix;		/* index into read buffer */
+	int		bufcnt;		/* number of bytes in read buffer */
+	unsigned char	buf[GPS_BUF_LEN];
+	int		wpt_wpt_type;	/* waypoint type in A1XX protocol */
+	int		rte_wpt_type;	/* waypoint type in A2XX protocol */
+	int		rte_rte_hdr;	/* route header type in A2xx proto */
+	int		rte_rte_link;	/* route link type in A2xx proto */
+	int		trk_trk_type;	/* track point type in A3XX proto */
+	int		trk_trk_hdr;	/* track hdr type in A3XX proto */
 };
 
 static struct gps_state	gps_state = { 0, -1, 0, D100, { 0 }, 0, 0 };
@@ -84,7 +79,7 @@ gps_open(const char * port, int debug)
 #error Unknown SIO_TYPE value
 #endif
 	gps_state.debug = debug;
-	gps_state.name = strdup( port );
+	gps_state.name = strdup(port);
 	if (!gps_state.name)
 		err(1, "serial port name too large");
 	gps_state.fd = open(gps_state.name, O_RDWR | O_NONBLOCK);
@@ -105,7 +100,7 @@ gps_open(const char * port, int debug)
 	memset(termios.c_cc, -1, NCCS);
 	termios.c_cc[VMIN] = 1;
 	termios.c_cc[VTIME] = 0;
-	if (ioctl(gps_state.fd, TIOCSETAF, &termios ) < 0)
+	if (ioctl(gps_state.fd, TIOCSETAF, &termios) < 0)
 		err(1, "TIOCSETAF");
 
 #elif SIO_TYPE == Linux
@@ -116,7 +111,7 @@ gps_open(const char * port, int debug)
 	termios.c_cflag  = (CSIZE & CS8) | CREAD | (CBAUD & B9600);
 	termios.c_iflag  = termios.c_oflag = termios.c_lflag = (ushort)0;
 	termios.c_oflag  = (ONLRET);
-	if (ioctl(gps_state.fd, TCSETAF, &termios ) < 0)
+	if (ioctl(gps_state.fd, TCSETAF, &termios) < 0)
 		err(1, "TCSETAF");
 
 #else
@@ -129,7 +124,7 @@ gps_open(const char * port, int debug)
  * Close the port indicated by the given handle.
  */
 void
-gps_close( gps_handle gps )
+gps_close(gps_handle gps)
 {
 	if (gps == &gps_state) {
 		if (gps_state.fd != -1) {
@@ -140,7 +135,7 @@ gps_close( gps_handle gps )
 
 #elif SIO_TYPE == Linux
 			if (ioctl(gps_state.fd, TCSETAF,
-				  &gps_state.termios ) < 0)
+				  &gps_state.termios) < 0)
 				err(1, "TCSETAF");
 
 #else
@@ -149,8 +144,8 @@ gps_close( gps_handle gps )
 			close(gps_state.fd);
 			gps_state.fd = -1;
 			gps_state.debug = 0;
-			gps_state.bufIx = 0;
-			gps_state.bufCnt = 0;
+			gps_state.bufix = 0;
+			gps_state.bufcnt = 0;
 			free(gps_state.name);
 			return;
 		}
@@ -191,8 +186,8 @@ gps_debug(gps_handle gps)
 int
 gps_read(gps_handle gps, unsigned char * val, int timeout)
 {
-    if ( gps == &gps_state ) {
-	if ( gps_state.bufIx >= gps_state.bufCnt ) {
+    if (gps == &gps_state) {
+	if (gps_state.bufix >= gps_state.bufcnt) {
 	    int stat;
 	    struct timeval  time;
 #if SIO_TYPE == BSD
@@ -202,39 +197,39 @@ gps_read(gps_handle gps, unsigned char * val, int timeout)
 #else
 #error Unknown SIO_TYPE value
 #endif
-	    memset( &time, 0, sizeof time );
+	    memset(&time, 0, sizeof time);
 	    time.tv_sec = timeout;
-	    FD_ZERO( &readfds );
-	    FD_SET( gps_state.fd, &readfds );
+	    FD_ZERO(&readfds);
+	    FD_SET(gps_state.fd, &readfds);
 	    do {
-		stat = select( gps_state.fd + 1, &readfds, 0, 0,
-			       timeout == -1 ? 0 : &time );
-	    } while (( stat < 0 ) && ( errno == EINTR ));
-	    switch ( stat ) {
+		stat = select(gps_state.fd + 1, &readfds, 0, 0,
+			       timeout == -1 ? 0 : &time);
+	    } while ((stat < 0) && (errno == EINTR));
+	    switch (stat) {
 	      case -1:
-		if ( gps_state.debug ) {
-		    warn( gps_state.name );
+		if (gps_state.debug) {
+		    warn(gps_state.name);
 		}
 		return -1;
 	      case 0:
 		return 0;
 	      case 1:
-		gps_state.bufIx = 0;
-		gps_state.bufCnt =
-		    read( gps_state.fd, gps_state.buf, GPS_BUF_LEN );
-		if ( gps_state.bufCnt <= 0 ) {
-		    if ( gps_state.debug ) {
-			warn( gps_state.name );
+		gps_state.bufix = 0;
+		gps_state.bufcnt =
+		    read(gps_state.fd, gps_state.buf, GPS_BUF_LEN);
+		if (gps_state.bufcnt <= 0) {
+		    if (gps_state.debug) {
+			warn(gps_state.name);
 		    }
 		    return -1;
 		}
-		if ( gps_state.debug > 4 ) {
-		    gpsDisplay( '<', gps_state.buf, gps_state.bufCnt );
+		if (gps_state.debug > 4) {
+		    gps_display('<', gps_state.buf, gps_state.bufcnt);
 		}
 	    }
 	}
-	if ( gps_state.bufIx < gps_state.bufCnt ) {
-	    *val = gps_state.buf[ gps_state.bufIx++ ];
+	if (gps_state.bufix < gps_state.bufcnt) {
+	    *val = gps_state.buf[gps_state.bufix++];
 	    return 1;
 	}
     }
@@ -254,13 +249,13 @@ gps_write(gps_handle gps, const unsigned char * buf, int cnt)
 		while (cnt > 0) {
 			written = write(gps_state.fd, buf, cnt);
 			if (written > 0) {
-				if ( gps_state.debug > 4)
-					gpsDisplay('>', buf, written);
+				if (gps_state.debug > 4)
+					gps_display('>', buf, written);
 				cnt -= written;
 				buf += written;
 			} else {
 				if (gps_state.debug)
-					warn( gps_state.name );
+					warn(gps_state.name);
 				return -1;
 			}
 		}
@@ -270,127 +265,75 @@ gps_write(gps_handle gps, const unsigned char * buf, int cnt)
 }
 
 void
-gps_set_wpt_type(gpsHandle gps, int wptType)
+gps_set_wpt_type(gps_handle gps, int wpt_type)
 {
 	if (gps == &gps_state)
-		gps_state.wptType = wptType;
+		gps_state.wpt_type = wpt_type;
 }
 
 int
-gpsGetWptType (gps_handle gps)
+gps_get_wpt_type(gps_handle gps)
 {
 	if (gps == &gps_state)
-		return gps_state.wptType;
+		return gps_state.wpt_type;
 	return -1;
 }
 
-static void
-gpsSetWptWptType(gps_handle gps, int type)
-{
-    if (gps == &gps_state) {
-	gps_state.wptWptType = type;
-    }
-}
-
-static void
-gpsSetRteRteHdr(gps_handle gps, int type)
-{
-    if (gps == &gps_state) {
-	gps_state.rteRteHdr = type;
-    }
-}
-
-static void
-gpsSetRteRteLink(gps_handle gps, int type)
-{
-    if (gps == &gps_state) {
-	gps_state.rteRteLink = type;
-    }
-}
-
-static void
-gpsSetRteWptType(gps_handle gps, int type)
-{
-    if (gps == &gps_state) {
-	gps_state.rteWptType = type;
-    }
-}
-
-static void
-gpsSetTrkTrkHdr(gps_handle gps, int type)
-{
-    if (gps == &gps_state) {
-	gps_state.trkTrkHdr = type;
-    }
-}
-
-static void
-gpsSetTrkTrkType(gps_handle gps, int type)
-{
-    if (gps == &gps_state) {
-	gps_state.trkTrkType = type;
-    }
-}
-
-int
-gpsGetRteRteHdr(gps_handle gps)
-{
-    if (gps == &gps_state) {
-	return gps_state.rteRteHdr;
-    }
-    return (-1);
-}
-
-int
-gpsGetTrkTrkType(gps_handle gps)
-{
-    if (gps == &gps_state) {
-	return gps_state.trkTrkType;
-    }
-    return (-1);
-}
-
-/* XXX this probably belongs in gpscaps.c */
 void
-gpsSetCapability(gps_handle gps, int phys, int link, int app, int dat, int typ)
+gps_set_wpt_wpt_type(gps_handle gps, int type)
 {
-	if (phys == 0) {
-		/* common stuff between the two link protocols */
-		if (link == 1 || link == 2) {
-			if (app == 100 && dat == 0) {	/* A100 <D0> */
-				gpsSetWptWptType(gps, typ);
-			}
-
-			if (app == 200 && dat == 0) {	/* A200 <D0> */
-				gpsSetRteRteHdr(gps, typ);
-			}
-			if (app == 200 && dat == 1) {	/* A200 <D1> */
-				gpsSetRteWptType(gps, typ);
-			}
-
-			if (app == 201 && dat == 0) {	/* A201 <D0> */
-				gpsSetRteRteHdr(gps, typ);
-			}
-			if (app == 201 && dat == 1) {	/* A201 <D1> */
-				gpsSetRteWptType(gps, typ);
-			}
-			if (app == 201 && dat == 1) {	/* A201 <D2> */
-				gpsSetRteRteLink(gps, typ);
-			}
-
-			if (app == 300 && dat == 0) {	/* A300 <D0> */
-				gpsSetTrkTrkType(gps, typ);
-			}
-
-			if (app == 301 && dat == 0) {	/* A301 <D0> */
-				gpsSetTrkTrkHdr(gps, typ);
-			}
-			if (app == 301 && dat == 1) {	/* A301 <D1> */
-				gpsSetTrkTrkType(gps, typ);
-			}
-
-			/* XXX more ... */
-
-		}
-	}
+	if (gps == &gps_state)
+		gps_state.wpt_wpt_type = type;
 }
+
+void
+gps_set_rte_rte_hdr(gps_handle gps, int type)
+{
+	if (gps == &gps_state)
+		gps_state.rte_rte_hdr = type;
+}
+
+void
+gps_set_rte_rte_link(gps_handle gps, int type)
+{
+	if (gps == &gps_state)
+		gps_state.rte_rte_link = type;
+}
+
+void
+gps_set_rte_wpt_type(gps_handle gps, int type)
+{
+	if (gps == &gps_state)
+		gps_state.rte_wpt_type = type;
+}
+
+void
+gps_set_trk_trk_hdr(gps_handle gps, int type)
+{
+	if (gps == &gps_state)
+		gps_state.trk_trk_hdr = type;
+}
+
+void
+gps_set_trk_trk_type(gps_handle gps, int type)
+{
+	if (gps == &gps_state)
+		gps_state.trk_trk_type = type;
+}
+
+int
+gps_get_rte_rte_hdr(gps_handle gps)
+{
+	if (gps == &gps_state)
+		return gps_state.rte_rte_hdr;
+	return (-1);
+}
+
+int
+gps_get_trk_trk_type(gps_handle gps)
+{
+	if (gps == &gps_state)
+		return gps_state.trk_trk_type;
+	return (-1);
+}
+

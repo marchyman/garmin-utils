@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsload.c,v 1.5 2001/12/16 00:56:16 marc Exp $
+ *	$snafu: gpsload.c,v 1.6 2003/04/10 20:50:22 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -13,6 +13,18 @@
 #include "gpsformat.h"
 #include "gpsload.h"
 
+    /*
+     * Garmin GPS load protocol
+     *
+     * dev1 -> dev2:	transfer begin
+     * dev1 -> dev2:	transfer data
+     * dev1 -> dev2:	transfer end
+     */
+
+    /*
+     * Load the lists specified.  Return 1 if upload successful,
+     * -1 otherwise.
+     */
     /*
      * Send a start transfer.
      */
