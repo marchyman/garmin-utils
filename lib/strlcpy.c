@@ -23,7 +23,8 @@ static char *rcsid = "$OpenBSD: strlcpy.c,v 1.7 2003/04/12 21:56:39 millert Exp 
 #include <sys/types.h>
 #include <string.h>
 
-#include "gpslib.h"
+#include <stdio.h>		/* needed by gpslib.h */
+#include "gpslib.h"		/* needed for function prototype */
 
 /*
  * Copy src to string dst of size siz.  At most siz-1 characters

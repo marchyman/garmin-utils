@@ -1,4 +1,4 @@
-# $snafu: GNUmakefile.inc,v 2.0 2003/10/06 19:10:41 marc Exp $
+# $snafu: GNUmakefile.inc,v 2.1 2004/02/14 22:14:35 marc Exp $
 #
 # Default installation directories
 #
@@ -25,7 +25,7 @@ CFLAGS+=	-DLINUX
 
 # Program version
 #
-CFLAGS+=	-DVERSION=\"2.0\"
+CFLAGS+=	-DVERSION=\"2.1\"
 
 # Other C flags
 #
