@@ -1,4 +1,4 @@
-# $snafu: Makefile.inc,v 1.13 2003/04/11 23:46:53 marc Exp $
+# $snafu: Makefile.inc,v 1.14 2003/04/14 21:08:49 marc Exp $
 #
 # Default installation directories
 #
@@ -34,4 +34,4 @@ LIBGARMIN!=	cd $(.CURDIR)/../lib; \
 
 # Clean up emacs backup files as part of a make clean
 #
-CLEANFILES+= ID *~ .depend
+CLEANFILES+= ${.CURDIR}/TAGS ${.CURDIR}/ID ${.CURDIR}/*~
