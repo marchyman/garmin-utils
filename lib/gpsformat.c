@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.23 2003/04/24 04:18:14 marc Exp $
+ *	$snafu: gpsformat.c,v 1.24 2003/04/24 19:37:39 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -58,6 +58,21 @@ gps_buffer_new(void)
 	data = malloc(GPS_FRAME_MAX);
 	assert(data != NULL);
 	return data;
+}
+
+/*
+ * convert len bytes of buf in hex representation to binary
+ */
+static void
+gps_get_info(char *info, char *buf, int len)
+{
+	int ix;
+	int val;
+
+	for (ix = 0; ix < len; ix += 2) {
+		sscanf(&buf[ix], "%2x", &val);
+		info[ix / 2] = (char) val;
+	}
 }
 
 /*
@@ -346,7 +361,7 @@ d107_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 
 static struct gps_list_entry *
 d108_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
-	 int disp)
+	 int disp, char *info)
 {
 	u_char *data;
 	int len;
@@ -359,7 +374,7 @@ d108_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 	data[len++] = state == WAYPOINTS ? p_wpt_data : p_rte_wpt_data;
 
 	/* byte 1: waypoint class (0 == user) */
-	data[len++] = 0;
+	data[len++] = info[0];
 
 	/* byte 2: waypoint color (0xff == default) */
 	data[len++] = (u_char) 0xff;
@@ -375,10 +390,15 @@ d108_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 	data[len++] = (u_char) (sym >> 8);
 	
 	/* byte 7-24: subclass (value per garmin doc) */
-	memset(&data[len], 0, 6);
-	len += 6;
-	memset(&data[len], 0xff, 12);
-	len += 12;
+	if (info[0] != 0) {
+		memcpy(&data[len], &info[1], 18);
+		len += 18;
+	} else {
+		memset(&data[len], 0, 6);
+		len += 6;
+		memset(&data[len], 0xff, 12);
+		len += 12;
+	}
 
 	/* byte 25-28: latitude */
 	double2semicircle(lat, &data[len]);
@@ -427,8 +447,8 @@ d108_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 }
 
 static struct gps_list_entry *
-d109_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
-	 int disp)
+d109_wpt(int state, char *name, double lat, double lon, char *cmnt,
+	 int sym, int disp, char *info)
 {
 	u_char *data;
 	int len;
@@ -444,7 +464,7 @@ d109_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 	data[len++] = 1;
 
 	/* byte 2: waypoint class */
-	data[len++] = 0;
+	data[len++] = info[0];
 
 	/* byte 3: display and color (1f == default color */
 	data[len++] = ((disp << 5) & 0x60) | 0x1f;
@@ -457,10 +477,15 @@ d109_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 	data[len++] = (u_char) (sym >> 8);
 	
 	/* byte 7-24: subclass (assumes value same as D108) */
-	memset(&data[len], 0, 6);
-	len += 6;
-	memset(&data[len], 0xff, 12);
-	len += 12;
+	if (info[0] != 0) {
+		memcpy(&data[len], &info[1], 18);
+		len += 18;
+	} else {
+		memset(&data[len], 0, 6);
+		len += 6;
+		memset(&data[len], 0xff, 12);
+		len += 12;
+	}
 
 	/* byte 25-28: latitude */
 	double2semicircle(lat, &data[len]);
@@ -533,15 +558,18 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 	int disp;			/* symbol display mode */
 	char name[GPS_STRING_MAX + 1];	/* waypoint name */
 	char cmnt[GPS_STRING_MAX + 1];	/* comment */
+	char data[GPS_STRING_MAX + 1];	/* waypoint class and subclass */
 
 	char *beg;
 	char *end;
 	int len;
 	int wpt;
 
-	sym = disp = *link = -1;
+	*link = -1;
+	sym = disp = 0;
 	name[0] = 0;
 	cmnt[0] = 0;
+	data[0] = 0;
 
 	/* Latitude and longitude */
 	sscanf(buf, "%lf %lf", &lat, &lon);
@@ -549,8 +577,9 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 	/* key:value pairs */
 	for (beg = strchr(buf, ':'); beg; beg = end) {
 		end = strchr(beg + 1, ':');
+		/* len includes space for null */
 		if (end == NULL)
-			len = strlen(beg + 1);
+			len = strlen(beg + 1) + 1;
 		else
 			len = end - beg - 2;
 		if (len > GPS_STRING_MAX)
@@ -558,6 +587,10 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 		switch (toupper(beg[-1])) {
 		case 'A':
 			/* altitude ignored */
+			break;
+		case 'W':
+			/* waypoint data (class and subclass) */
+			gps_get_info(data, &beg[1], len);
 			break;
 		case 'S':
 			/* symbol */
@@ -568,10 +601,10 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 			sscanf(&beg[1], "%d", &disp);
 			break;
 		case 'I':
-			strlcpy(name, &beg[1], len + 1);
+			strlcpy(name, &beg[1], len);
 			break;
 		case 'C':
-			strlcpy(cmnt, &beg[1], len + 1);
+			strlcpy(cmnt, &beg[1], len);
 			break;
 		case 'L':
 			/* route link code */
@@ -584,8 +617,8 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 		}
 	}
 
-	gps_printf(gps, 3, "wpt %lf %lf %d %d %s %s %d\n", lat, lon,
-		   sym, disp, name, cmnt, link);
+	gps_printf(gps, 3, "wpt %f %f %d %d %s %s %d\n", lat, lon, sym,
+		   disp, name, cmnt, *link);
 
 	/* Now figure out which waypoint format is being used and
 	   call the appropriate routine */
@@ -625,10 +658,10 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 		entry = d107_wpt(state, name, lat, lon, cmnt, sym, disp);
 		break;
 	case D108:
-		entry = d108_wpt(state, name, lat, lon, cmnt, sym, disp);
+		entry = d108_wpt(state, name, lat, lon, cmnt, sym, disp, data);
 		break;
 	case D109:
-		entry = d109_wpt(state, name, lat, lon, cmnt, sym, disp);
+		entry = d109_wpt(state, name, lat, lon, cmnt, sym, disp, data);
 		break;
 	default:
 		gps_printf(gps, 1, "unknown waypoint type %d\n", wpt);
@@ -959,8 +992,10 @@ gps_format(gps_handle gps, FILE *stream)
 		}
 
 		/* If entry is not null link it into the current list */
-		if (entry != NULL)
+		if (entry != NULL) {
 			gps_append_list(cur, entry);
+			entry = NULL;
+		}
 	}
 	return lists;
 }

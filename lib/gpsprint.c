@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.26 2003/04/23 23:07:44 marc Exp $
+ *	$snafu: gpsprint.c,v 1.27 2003/04/24 19:37:39 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -223,23 +223,26 @@ struct wpt_info {
 	u_short	alt_off;	/* length always 4 */
 	u_short	sym_off;
 	u_short	sym_len;
-	u_short	disp_off;
-	u_short	disp_len;
+	u_short	disp_off;	/* length always 1 */
+	u_short	class_off;	/* length always 1 */
+	u_short	subclass_off;
+	u_short	subclass_len;
 	u_short	cmnt_off;
 	u_short	cmnt_len;
 };
 
 static struct wpt_info winfo[] = {
-	{ D100,  7, 11, 1,  0,  0, 0,  0, 0, 19, 40 },
-	{ D101,  7, 11, 1,  0, 63, 1,  0, 0, 19, 40 },
-	{ D102,  7, 11, 1,  0, 63, 2,  0, 0, 19, 40 },
-	{ D103,  7, 11, 1,  0, 59, 1, 60, 1, 19, 40 },
-	{ D104,  7, 11, 1,  0, 63, 2, 65, 1, 19, 40 },
-	{ D105,  1,  5, 0,  0,  9, 2,  0, 0, 11,  0 },
-	{ D106, 15, 19, 0,  0, 23, 2,  0, 0, 25,  0 },
-	{ D107,  7, 11, 1,  0, 59, 1, 60, 1, 19, 40 },
-	{ D108, 25, 29, 0, 33,  5, 2,  3, 1, 49,  0 },
-	{ D109, 25, 29, 0, 33,  5, 2,  0, 0, 53,  0 }
+/*	  typ  lat lon alt nam -sym- dsp cls -sub-  -cmnt- */
+	{ D100,  7, 11, 1,  0,  0, 0,  0, 0, 0, 0,  19, 40 },
+	{ D101,  7, 11, 1,  0, 63, 1,  0, 0, 0, 0,  19, 40 },
+	{ D102,  7, 11, 1,  0, 63, 2,  0, 0, 0, 0,  19, 40 },
+	{ D103,  7, 11, 1,  0, 59, 1, 60, 0, 0, 0,  19, 40 },
+	{ D104,  7, 11, 1,  0, 63, 2, 65, 0, 0, 0,  19, 40 },
+	{ D105,  1,  5, 0,  0,  9, 2,  0, 0, 0, 0,  11,  0 },
+	{ D106, 15, 19, 0,  0, 23, 2,  0, 1, 2, 13, 25,  0 },
+	{ D107,  7, 11, 1,  0, 59, 1, 60, 0, 0, 0,  19, 40 },
+	{ D108, 25, 29, 0, 33,  5, 2,  3, 1, 7, 18, 49,  0 },
+	{ D109, 25, 29, 0, 33,  5, 2,  0, 2, 7, 18, 53,  0 }
 };
 
 static struct wpt_info *
@@ -256,12 +259,14 @@ static void
 print_waypoint(const u_char *wpt, int len, int type)
 {
 	struct wpt_info *wi;
+	const u_char *w;
 	double lat;
 	double lon;
 	char *name;
 	char *cmnt[2];
 	long sym;
 	long dsp;
+	long class;
 	float alt;
 
 	wi = find_wpt_info(type);
@@ -281,7 +286,7 @@ print_waypoint(const u_char *wpt, int len, int type)
 		if (sym != -1)
 			printf(" S:%ld", sym);
 
-		dsp = get_int(wpt, len, wi->disp_off, wi->disp_len);
+		dsp = get_int(wpt, len, wi->disp_off, 1);
 		if (dsp != -1) {
 			printf(" D:%ld", dsp);
 		}
@@ -312,6 +317,20 @@ print_waypoint(const u_char *wpt, int len, int type)
 					printf(" C:%s", cmnt[1]);
 				free(cmnt[1]);
 			}
+		}
+
+		/*
+		 * Newer GPS contain a class/subclass that describes
+		 * map points.   Save that information as a hex string
+		 * if it exists and is not zero (zero is a user waypoint).
+		 */
+
+		class = get_int(wpt, len, wi->class_off, 1);
+		if (class != -1 && class != 0) {
+			printf(" W:%02x", (int) class);
+			for (w = &wpt[wi->subclass_off];
+			     w < &wpt[wi->subclass_off + wi->subclass_len]; w++)
+				printf("%02x", *w);
 		}
 	} else
 		warnx("unknown waypoint packet type: %d", type);
@@ -416,8 +435,8 @@ find_trk_info(int type)
 /*
  * print a track header or entry.  New entry format:
  *
- *	date       time     lat      long      alt   new
- *	yyyy-mm-dd hh:mm:ss 99.99999 999.99999 99.99 [start]
+ *	date       time       lat      long      alt   new
+ *	[yyyy-mm-dd hh:mm:ss] 99.99999 999.99999 99.99 [start]
  */
 static void
 print_track(const u_char *trk, int len, int type)
@@ -441,19 +460,19 @@ print_track(const u_char *trk, int len, int type)
 			lat = semicircle2double(&trk[ti->lat_off]);
 			lon = semicircle2double(&trk[ti->long_off]);
 			time = get_int(trk, len, ti->time_off, ti->time_len);
-			if (time) {
+			if (time != -1) {
 				time += UNIX_TIME_OFFSET;
-				strftime(buf, sizeof buf, "%Y-%m-%d %T",
+				strftime(buf, sizeof buf, "%Y-%m-%d %T ",
 					 gmtime(&time));
 			} else
-				strlcat(buf, "unknown", sizeof buf);
+				buf[0] = 0;
 			if (ti->alt_off)
 				alt = get_float(&trk[ti->alt_off]);
 			else
 				alt = no_val.f;
 			/* skip depth for now */
 			new = get_int(trk, len, ti->new_off, ti->new_len);
-			printf("%s %10f %11f", buf, lat, lon);
+			printf("%s%10f %11f", buf, lat, lon);
 			if (alt != no_val.f)
 				printf(" %f", alt);
 			printf("%s\n", new ? " start" : "");
@@ -501,21 +520,22 @@ gps_print(gps_handle gps, enum gps_cmd_id cmd, const u_char *packet,
 			case CMD_RTE:
 				printf(RTE_HDR ", %d records]\n"
 				       "# **n [route name]\n"
-				       "# lat long [A:altitude] [S:symbol] "
-				       "[D:display] [I:ident] [C:comment] "
-				       "[L:link]\n", limit);
+				       "# lat long [A:alt] [S:sym] "
+				       "[D:display] [I:id] [C:cmnt] "
+				       "[W:wpt info] [L:link]\n", limit);
 				break;
 			case CMD_TRK:
 				printf(TRK_HDR ", %d records]\n"
 				       "# [Track: track name]\n"
-				       "# yyyy-mm-dd hh:mm:ss lat long [alt] "
+				       "# [yyyy-mm-dd hh:mm:ss] lat long [alt] "
 				       "[start]\n", limit);
 				break;
 			case CMD_WPT:
 				printf(WPT_HDR ", %d records]\n"
-				       "# lat long [A:altitude] [S:symbol] "
-				       "[D:display] [I:ident] [C:comment]\n",
-				       limit);
+				       "# **n [route name]\n"
+				       "# lat long [A:alt] [S:sym] "
+				       "[D:display] [I:id] [C:cmnt] "
+				       "[W:wpt info] [L:link]\n", limit);
 				break;
 			default:
 				printf("[unknown, %d records]\n", limit);

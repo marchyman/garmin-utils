@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsdisplay.c,v 1.10 2003/04/13 18:01:16 marc Exp $
+ *	$snafu: gpsdisplay.c,v 1.11 2003/04/24 19:37:39 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -73,7 +73,7 @@ gps_display(char direction, const u_char *buf, int len)
 
 		data[1] = direction;
 		while (cnt--) {
-			if (isprint(*d))
+			if (*d < 128 && isprint(*d))
 				*a++ = *d;
 			else
 				*a++ = '.';
