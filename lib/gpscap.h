@@ -1,5 +1,5 @@
 /*
- *	$Id: gpscap.h,v 1.1 1998/05/12 05:01:15 marc Exp $
+ *	$snafu: gpscap.h,v 1.2 2001/05/02 00:34:53 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *

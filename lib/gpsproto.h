@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsproto.h,v 1.3 1998/05/14 01:38:47 marc Exp $
+ *	$snafu: gpsproto.h,v 1.4 2001/05/02 00:34:55 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *

@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsprint.c,v 1.4 1999/07/13 23:12:39 marc Exp $
+ *	$Id: gpsprint.c,v 1.5 2001/05/02 00:34:55 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -54,6 +54,17 @@ semicircleToDouble( const unsigned char * s )
      *
      * printed as:
      * xxxxxx -99.999999 -999.999999 sssss/d comments
+     *
+     *
+     * GPS 12/12XL waypoint format is:
+     *
+     * ...
+     *	59	symbol
+     *	60	display option (0: sym + name, 1: symbol, 2: sym + comment)
+     *
+     * printed as:
+     * xxxxxx -99.999999 -999.999999 ss/d comments
+     *
      */
 static void
 printWaypoint( const unsigned char * wpt, int len )
@@ -69,6 +80,8 @@ printWaypoint( const unsigned char * wpt, int len )
     name[ 6 ] = 0;
     memcpy( comment, &wpt[ 19 ], 40 );
     comment[ 40 ] = 0;
+
+#if GPS == 0   /* GPS III */
     if ( len >= 65 ) {
 	sym = wpt[ 63 ] + ( wpt[ 64 ] << 8 );
 	if ( len >= 66 ) {
@@ -77,6 +90,18 @@ printWaypoint( const unsigned char * wpt, int len )
     }
     printf( "%s %10f %11f %5d/%d %s\n", name, lat, lon,
 	    sym, disp, comment );
+#elif GPS == 1  /* GPS 12/12XL */
+    if ( len >= 60 ) {
+	sym = wpt[ 59 ];
+	if ( len >= 61 ) {
+	    disp = wpt[ 60 ];
+	}
+    }
+    printf( "%s %10f %11f %2d/%1d %s\n", name, lat, lon,
+	    sym, disp, comment );
+#else
+#error Unknown GPS value
+#endif
 }
 
     /*
@@ -111,7 +136,8 @@ printRteHdr( const unsigned char * hdr, int len )
      *	 1	new track flag
      *
      * printed as:
-     * -99.999999 -999.999999 yymmddhhmmss [start]
+     * -99.999999 -999.999999 yyyy-mm-dd hh:mm:ss [start]
+     *
      */
 static void
 printTrack( const unsigned char * trk, int len )
@@ -121,13 +147,13 @@ printTrack( const unsigned char * trk, int len )
     time_t time = UNIX_TIME_OFFSET + trk[ 9 ] + ( trk[ 10 ] << 8 ) +
 		  ( trk[ 11 ] << 16 ) + ( trk[ 12 ] << 24 );
     const char * startstring = trk[ 13 ] ? " start" : "";
-    char timestring[ 16 ];
+    char timestring[ 32 ];
 
     if ( time > 0 ) {
 	struct tm * gmt = gmtime( &time );
-	sprintf( timestring, "%2.2d%2.2d%2.2d%2.2d%2.2d%2.2d",
-		 gmt->tm_year, gmt->tm_mon, gmt->tm_mday, gmt->tm_hour,
-		 gmt->tm_min, gmt->tm_sec );
+	snprintf( timestring, 32, "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d",
+		 gmt->tm_year + 1900, gmt->tm_mon + 1, gmt->tm_mday,
+		 gmt->tm_hour, gmt->tm_min, gmt->tm_sec );
     } else {
 	strcpy( timestring, "unknown" );
     }

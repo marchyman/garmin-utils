@@ -1,5 +1,5 @@
 /*
- *	$Id: gardump.c,v 1.4 1998/06/05 18:51:00 marc Exp $
+ *	$snafu: gardump.c,v 1.5 2001/05/02 00:34:51 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *

@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsload.h,v 1.1 1998/05/14 01:38:46 marc Exp $
+ *	$snafu: gpsload.h,v 1.2 2001/05/02 00:34:54 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *

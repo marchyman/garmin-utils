@@ -1,5 +1,5 @@
 /*
- *	$Id: gps1.c,v 1.3 2000/06/27 22:45:49 marc Exp $
+ *	$Id: gps1.c,v 1.4 2001/05/02 00:34:53 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -41,7 +41,13 @@ typedef struct {
     int			debug;		/* debugging level (set at open) */
     int			fd;		/* fd of the open file */
     char*		name;		/* name of the device */
+#if OS == 0 /* BSD */
     struct termios	termios;	/* initial term settings */
+#elif OS == 1 /* Linux */
+    struct termio	termios;
+#else
+#error Unknown OS value
+#endif
     int			bufIx;		/* index into read buffer */
     int			bufCnt;		/* number of bytes in read buffer */
     unsigned char	buf[ GPS_BUF_LEN ];
@@ -58,8 +64,11 @@ static GpsState	gpsState = { 0, -1, 0, { 0 }, 0, 0 };
 GpsHandle
 gpsOpen( const char * port, int debug )
 {
+#if OS == 0 /*BSD*/
     struct termios  termios;
-
+#elif OS == 1 /*Linux*/
+    struct termio   termios;
+#endif
     gpsState.debug = debug;
     gpsState.name = strdup( port );
     if ( ! gpsState.name ) {
@@ -73,6 +82,7 @@ gpsOpen( const char * port, int debug )
 	/* does not return */
     }
 
+#if OS == 0 /*BSD*/
     if ( ioctl( gpsState.fd, TIOCGETA, &termios) < 0 ) {
 	err( 1, "TIOCGETA" );
 	/* does not return */
@@ -91,6 +101,17 @@ gpsOpen( const char * port, int debug )
 	err( 1, "TIOCSETAF" );
 	/* does not return */
     }
+#elif OS == 1 /*Linux*/
+    if ( ioctl( gpsState.fd, TCGETA, &termios) < 0 ) err( 1, "TCGETA" );
+    /* save current terminal settings */
+    memcpy( &gpsState.termios, &termios, sizeof gpsState.termios );
+    termios.c_cflag  = (CSIZE & CS8) | CREAD | (CBAUD & B9600);
+    termios.c_iflag  = termios.c_oflag = termios.c_lflag = (ushort)0;
+    termios.c_oflag  = (ONLRET);
+    if ( ioctl( gpsState.fd, TCSETAF, &termios ) < 0) err( 1, "TCSETAF" );
+#else
+#error Unknown OS value
+#endif
     return &gpsState;
 }
 
@@ -99,10 +120,19 @@ gpsClose( GpsHandle gps )
 {
     if ( gps == &gpsState ) {
 	if ( gpsState.fd != -1 ) {
+#if OS == 0 /* BSD */
 	    if ( ioctl( gpsState.fd, TIOCSETAF, &gpsState.termios ) < 0) {
 		err( 1, "TIOCSETAF" );
 		/* does not return */
 	    }
+#elif OS == 1 /* Linux */
+	    if ( ioctl( gpsState.fd, TCSETAF, &gpsState.termios ) < 0) {
+		err( 1, "TCSETAF" );
+		/* does not return */
+	    }
+#else
+#error Unknown OS value
+#endif
 	    close( gpsState.fd );
 	    gpsState.fd = -1;
 	    gpsState.debug = 0;
@@ -143,7 +173,13 @@ gpsRead( GpsHandle gps, unsigned char * val, int timeout )
 	if ( gpsState.bufIx >= gpsState.bufCnt ) {
 	    int stat;
 	    struct timeval  time;
+#if OS == 0 /*BSD*/
 	    struct fd_set   readfds;
+#elif OS == 1 /*Linux*/
+	    fd_set   readfds;
+#else
+#error Unknown OS value
+#endif
 	    memset( &time, 0, sizeof time );
 	    time.tv_sec = timeout;
 	    FD_ZERO( &readfds );

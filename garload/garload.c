@@ -1,5 +1,5 @@
 /*
- *	$Id: garload.c,v 1.4 1998/06/05 18:51:03 marc Exp $
+ *	$snafu: garload.c,v 1.5 2001/05/02 00:34:52 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *

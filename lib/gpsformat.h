@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsformat.h,v 1.2 1998/05/14 01:38:44 marc Exp $
+ *	$snafu: gpsformat.h,v 1.3 2001/05/02 00:34:54 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *

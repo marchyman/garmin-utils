@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsformat.c,v 1.3 1998/05/14 01:38:43 marc Exp $
+ *	$snafu: gpsformat.c,v 1.4 2001/05/02 00:34:54 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -221,6 +221,8 @@ scanWaypoint( GpsHandle gps, unsigned char * buf, FormatState state )
     addString( &data[ len ], comment, 40 );
     len += 40;
 
+#if GPS == 0   /* GPS III/III+ */
+
     /* bytes 60-63: distance (uploaded as zero) */
     data[ len++ ] = 0;
     data[ len++ ] = 0;
@@ -233,6 +235,18 @@ scanWaypoint( GpsHandle gps, unsigned char * buf, FormatState state )
 
     /* byte 66: display option */
     data[ len++ ] = (unsigned char) disp;
+
+#elif GPS == 1 /* GPS 12/12XL */
+
+    /* byte 60: symbol */
+    data[ len++ ] = (unsigned char) sym;
+
+    /* byte 61: display option */
+    data[ len++ ] = (unsigned char) disp;
+
+#else
+#error Unknown GPS value
+#endif
 
     return buildListEntry( data, len );
 }
@@ -247,6 +261,7 @@ scanTrack( GpsHandle gps, unsigned char * buf )
 {
     double lat;			/* latitude */
     double lon;			/* longitude */
+    unsigned char date[ 16 ];   /* track date (not used for upload) */
     unsigned char time[ 16 ];	/* track time (not used for upload) */
     unsigned char start[ 8 ];	/* start flag */
     int result;			/* input scan results */
@@ -256,12 +271,13 @@ scanTrack( GpsHandle gps, unsigned char * buf )
     int startFlag = 0;		/* start of track */
 
     /* break the input data up into its component fields */
-    result = sscanf( buf, "%lf %lf %15s %7s", &lat, &lon, time, start );
+    result = sscanf( buf, "%lf %lf %15s %15s %7s", &lat, &lon, date, time, start );
     switch ( result ) {
       case 2:
       case 3:
-	break;
       case 4:
+	break;
+      case 5:
 	if ( strcmp( start, "start" ) == 0 ) {
 	    startFlag = 1;
 	    break;
@@ -269,6 +285,7 @@ scanTrack( GpsHandle gps, unsigned char * buf )
 	/* fall through */
       default:
 	if ( gpsDebug( gps ) ) {
+            printf ("%d\n", result);
 	    warnx( "bad track: %s", buf );
 	}
 	return 0;
