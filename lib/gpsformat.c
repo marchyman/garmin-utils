@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.20 2003/04/17 23:50:21 marc Exp $
+ *	$snafu: gpsformat.c,v 1.21 2003/04/19 02:23:04 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -502,7 +502,7 @@ d109_wpt(int state, double lat, double lon, char *cmnt, int sym,
  * decode the buffer as a waypoint and format according to the required
  * waypoint type.   Data is expected to be in this format
  *
- *	name lat long sym/disp comments
+ *	name lat long [altitude] sym/disp comments
  */
 static struct gps_list_entry *
 waypoints(gps_handle gps, u_char *buf, int state)
@@ -530,9 +530,9 @@ waypoints(gps_handle gps, u_char *buf, int state)
 	}
 	name[6] = 0;
 	comment[40] = 0;
+
 	/* Now figure out which waypoint format is being used and
 	   call the appropriate routine */
-
 	switch (state) {
 	case WAYPOINTS:
 		wpt = gps_get_wpt_type(gps);
@@ -578,6 +578,39 @@ waypoints(gps_handle gps, u_char *buf, int state)
 		gps_printf(gps, 1, "unknown waypoint type %d\n", wpt);
 		break;
 	}
+
+	return entry;
+}
+
+/*
+ * decode the buffer as a route header or route link record.
+ * Route waypoints are handled by the above waypoint code.   Data is
+ * expected to be in this format
+ *
+ *	**number name	(route header)
+ *	*class ident	(route link)
+ */
+static struct gps_list_entry *
+routes(gps_handle gps, u_char *buf)
+{
+	struct gps_list_entry *entry = 0;
+	int result;
+	int rte = 0;
+	int class = -1;
+	char cmnt[52];
+
+	if (buf[1] == '*')
+		result = sscanf(buf, "**%d %51s", &rte, cmnt);
+	else
+		result = sscanf(buf, "*%d %51s", &class, cmnt);
+	if (result != 2) {
+		gps_printf(gps, 1, __func__ ": bad format: %s\n", buf);
+		return 0;
+	}
+	cmnt[51] = 0;
+	gps_printf(gps, 3, "route %d %s/%s\n", rte, cmnt, class);
+
+	;;;
 
 	return entry;
 }
@@ -778,16 +811,13 @@ gps_format(gps_handle gps, FILE *stream)
 			entry = waypoints(gps, &buf[ix], state);
 			break;
 		case ROUTES:
-#if 0
-			if ( buf[ ix ] == '*' ) {
-				entry = scanRoute( gps, &buf[ ix ] );
-			} else {
-				entry = scanWaypoint( gps, &buf[ ix ], state );
-			}
-#endif
+			if (buf[ix] == '*')
+				entry = routes(gps, &buf[ix]);
+			else
+				entry = waypoints(gps, &buf[ix], state);
 			break;
 		case TRACKS:
-			/* entry = scanTrack( gps, &buf[ ix ] ); */
+			/* ;;; entry = scanTrack( gps, &buf[ ix ] ); */
 			break;
 		}
 

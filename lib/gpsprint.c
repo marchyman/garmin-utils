@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.23 2003/04/17 23:08:29 marc Exp $
+ *	$snafu: gpsprint.c,v 1.24 2003/04/19 02:23:04 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -311,13 +311,11 @@ print_route(const u_char *rte, int len, int type)
 		num = get_int(rte, len, ri->num_off, 1);
 		id = get_string(rte, len, ri->cmnt_off, ri->cmnt_len);
 		class = get_int(rte, len, ri->class_off, ri->class_len);
-		printf("**%ld %s%s\n", num == -1 ? 0 : num, id ? id : "-",
-		       class == -1 ? "" :
-		       class == 0 ? " line" :
-		       class == 1 ? " link" :
-		       class == 2 ? " net" :
-		       class == 3 ? " direct" :
-		       class == 255 ? " snap" : " (unknown class)");
+		if (class == -1)
+			printf("**%ld", num == -1 ? 0 : num);
+		else
+			printf("*%ld", class);
+		printf(" %s\n", id ? id : "-");
 	} else
 		warnx("unknown route packet type: %d", type);
 }
