@@ -1,4 +1,4 @@
-# $Id: Makefile.inc,v 1.2 1998/06/05 18:50:56 marc Exp $
+# $Id: Makefile.inc,v 1.3 1998/08/28 20:40:27 marc Exp $
 #
 # Default installation directories
 #
@@ -8,11 +8,11 @@ MANDIR?=	${PREFIX}/man/cat
 
 # Name the default serial port to talk to the gps.
 #
-SERIAL_PORT?=	-DDEFAULT_PORT=\"/dev/cuab\"
+SERIAL_PORT?=	-DDEFAULT_PORT=\"/dev/cua00\"
 
 # Program version
 #
-VERSION?=	-DVERSION=\"1.0\"
+VERSION?=	-DVERSION=\"1.1\"
 
 # C options
 #

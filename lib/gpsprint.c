@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsprint.c,v 1.2 1998/05/14 01:38:46 marc Exp $
+ *	$Id: gpsprint.c,v 1.3 1998/08/28 20:40:28 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -75,7 +75,7 @@ printWaypoint( const unsigned char * wpt, int len )
 	    disp = wpt[ 65 ];
 	}
     }
-    printf( "%s %14.10f %15.10f %5d/%d %s\n", name, lat, lon,
+    printf( "%s %10f %11f %5d/%d %s\n", name, lat, lon,
 	    sym, disp, comment );
 }
 
@@ -131,7 +131,7 @@ printTrack( const unsigned char * trk, int len )
     } else {
 	strcpy( timestring, "unknown" );
     }
-    printf( "%14.10f %15.10f %s%s\n", lat, lon, timestring, startstring );
+    printf( "%10f %11f %s%s\n", lat, lon, timestring, startstring );
 }
 
 int
