@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsformat.c,v 1.1 1998/05/12 23:13:05 marc Exp $
+ *	$Id: gpsformat.c,v 1.2 1998/05/13 04:03:28 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -35,16 +35,123 @@ scanType( GpsHandle gps, unsigned char * buf )
 {
     if ( *buf == '[' ) {
 	if ( strncmp( buf, "[waypoints", 10 ) == 0 ) {
+	    if ( gpsDebug( gps ) > 1 ) {
+		warnx( "waypoints..." );
+	    }
 	    return WAYPOINTS;
 	}
 	if ( strncmp( buf, "[routes", 7 ) == 0 ) {
+	    if ( gpsDebug( gps ) > 1 ) {
+		warnx( "routes..." );
+	    }
 	    return ROUTES;
 	}
 	if ( strncmp( buf, "[tracks", 7 ) == 0 ) {
+	    if ( gpsDebug( gps ) > 1 ) {
+		warnx( "tracks..." );
+	    }
 	    return TRACKS;
 	}
     }
     return START;
+}
+
+    /*
+     * Build a list entry that contains the given data buffer.
+     */
+static GpsListEntry *
+buildListEntry( unsigned char * data, int dataLen )
+{
+    GpsListEntry * entry = (GpsListEntry *) malloc( sizeof( GpsListEntry ) );
+
+    assert( entry );
+    entry->next = 0;
+    entry->data = data;
+    entry->dataLen = dataLen;
+    return entry;
+}
+
+    /*
+     * Append data to a buffer. The rules are:
+     *	1) data must be upper case
+     *	2) If data less than reqd len null terminate.
+     *	3) if data still less than reqd len then space pad.
+     * Returns pointer to buffer after data has been added.
+     */
+static unsigned char *
+addString( unsigned char * buf, unsigned char * data, int len )
+{
+    while ( len-- ) {
+	if ( *data == '\n' ) {
+	    *data = 0;
+	}
+	if ( *data ) {
+	    *buf++ = toupper( *data++ );
+	} else {
+	    *buf++ = 0;
+	    if ( len ) {
+		memset( buf, ' ', len );
+		buf += len;
+		len = 0;
+	    }
+	}
+    }
+    return buf;
+}
+
+    /*
+     * convert the given float to a garmin `semicircle' and stuff
+     * it in to b (assumed to be at least 4 characters wide) in
+     * the garmin (little endian) order.
+     */
+static void
+floatToSemicircle( float f, unsigned char * b )
+{
+    float conv = 180.0 / (float) ( 1L << 31 );
+    long work = (long) ( f / conv );
+    b[ 0 ] = (unsigned char) work;
+    b[ 1 ] = (unsigned char) ( work >> 8 );
+    b[ 2 ] = (unsigned char) ( work >> 16 );
+    b[ 3 ] = (unsigned char) ( work >> 24 );
+}
+
+static GpsListEntry *
+scanRoute( GpsHandle gps, unsigned char * buf )
+{
+    int route;			/* route number */
+    char comment[ 24 ];		/* route comments */
+    int result;			/* input scan results */
+    unsigned char * data;	/* gps data buffer */
+    int len;			/* gps data len */
+
+    /* break the input data up into its component fields */
+    result = sscanf( buf, "**%d %20c", &route, comment );
+    if ( result != 2 ) {
+	if ( gpsDebug( gps ) ) {
+	    warnx( "bad route header: %s", buf );
+	}
+	return 0;
+    }
+    comment[ 20 ] = 0;
+
+    if ( gpsDebug( gps ) > 1 ) {
+	warnx( "route %d", route );
+    }
+
+    /* byte 0: route header type */
+    data = malloc( GPS_FRAME_MAX );
+    assert( data );
+    len = 0;
+    data[ len++ ] = rteHdr;
+
+    /* byte 1: route number */
+    data[ len++ ] = (unsigned char) route;
+
+    /* byte 2-22: route comment */
+    addString( &data[ len ], comment, 20 );
+    len += 20;
+
+    return buildListEntry( data, len );
 }
 
     /*
@@ -53,15 +160,80 @@ scanType( GpsHandle gps, unsigned char * buf )
      * Return 0 if a packet could not be created.
      */
 static GpsListEntry *
-scanWaypoint( GpsHandle gps, unsigned char * buf )
+scanWaypoint( GpsHandle gps, unsigned char * buf, FormatState state )
 {
-    GpsListEntry * entry = 0
+    char name[ 8 ];		/* waypoint name */
+    float lat;			/* latitude */
+    float lon;			/* longitude */
+    int sym;			/* symbol */
+    int disp;			/* symbol display mode */
+    char comment[ 44 ];		/* comment */
+    int result;			/* input scan results */
+    unsigned char * data;	/* gps data buffer */
+    int len;			/* gps data len */
 
-    /* Assume it is a waypoint or route header and build the
-       appropriate entry. */
+    /* break the input data up into its component fields */
+    result = sscanf( buf, "%6c %f %f %d/%d %40c",
+		    name, &lat, &lon, &sym, &disp, comment );
+    if ( result!= 6 ) {
+	if ( gpsDebug( gps ) ) {
+	    warnx( "bad waypoint: %s", buf );
+	}
+	return 0;
+    }
+    name[ 6 ] = 0;
+    comment[ 40 ] = 0;
 
-    ;;;
-    return entry;
+    if ( gpsDebug( gps ) > 1 ) {
+	warnx( "waypoint %s", name );
+    }
+
+    /* byte 1: waypoint type */
+    data = malloc( GPS_FRAME_MAX );
+    assert( data );
+    len = 0;
+    if ( state == ROUTES ) {
+	data[ len++ ] = rteWptData;
+    } else {
+	data[ len++ ] = wptData;
+    }
+
+    /* bytes 2-7: waypoint name */
+    memcpy( &data[ len ], name, 6 );
+    len += 6;
+
+    /* bytes 8-11: latitude */
+    floatToSemicircle( lat, &data[ len ] );
+    len += 4;
+
+    /* bytes 12-15: longitude */
+    floatToSemicircle( lon, &data[ len ] );
+    len += 4;
+
+    /* bytes 16-19: zero */
+    data[ len++ ] = 0;
+    data[ len++ ] = 0;
+    data[ len++ ] = 0;
+    data[ len++ ] = 0;
+
+    /* bytes 20-59: comments */
+    addString( &data[ len ], comment, 40 );
+    len += 40;
+
+    /* bytes 60-63: distance (uploaded as zero) */
+    data[ len++ ] = 0;
+    data[ len++ ] = 0;
+    data[ len++ ] = 0;
+    data[ len++ ] = 0;
+
+    /* bytes 64-65: symbol */
+    data[ len++ ] = (unsigned char) sym;
+    data[ len++ ] = (unsigned char) (sym >> 8);
+
+    /* byte 66: display option */
+    data[ len++ ] = (unsigned char) disp;
+
+    return buildListEntry( data, len );
 }
 
     /*
@@ -72,13 +244,59 @@ scanWaypoint( GpsHandle gps, unsigned char * buf )
 static GpsListEntry *
 scanTrack( GpsHandle gps, unsigned char * buf )
 {
-    GpsListEntry * entry = 0;
+    float lat;			/* latitude */
+    float lon;			/* longitude */
+    unsigned char time[ 16 ];	/* track time (not used for upload) */
+    unsigned char start[ 8 ];	/* start flag */
+    int result;			/* input scan results */
+    unsigned char * data;	/* gps data buffer */
+    int len;			/* gps data len */
 
-    /* Assume this entry is part of a track log
-       appropriate entry. */
+    int startFlag = 0;		/* start of track */
 
-    ;;;
-    return entry;
+    /* break the input data up into its component fields */
+    result = sscanf( buf, "%f %f %15s %7s", &lat, &lon, time, start );
+    switch ( result ) {
+      case 2:
+      case 3:
+	break;
+      case 4:
+	if ( strcmp( start, "start" ) == 0 ) {
+	    startFlag = 1;
+	    break;
+	}
+	/* fall through */
+      default:
+	if ( gpsDebug( gps ) ) {
+	    warnx( "bad track: %s", buf );
+	}
+	return 0;
+    }
+
+    /* byte 1: waypoint type */
+    data = malloc( GPS_FRAME_MAX );
+    assert( data );
+    len = 0;
+    data[ len++ ] = trkData;
+
+    /* byte 2-5: latitude */
+    floatToSemicircle( lat, &data[ len ] );
+    len += 4;
+
+    /* byte 6-9: longitude */
+    floatToSemicircle( lon, &data[ len ] );
+    len += 4;
+
+    /* bytes 10-13: time (uploaded as zero */
+    data[ len++ ] = 0;
+    data[ len++ ] = 0;
+    data[ len++ ] = 0;
+    data[ len++ ] = 0;
+
+    /* byte 14: start indicator */
+    data[ len++ ] = (unsigned char) startFlag;
+
+    return buildListEntry( data, len );
 }
 
 GpsLists *
@@ -106,6 +324,9 @@ gpsFormat( GpsHandle gps, FILE * stream )
 
 	/* check for list terminator */
 	if (( buf[ ix ] == '[' ) && (strncmp( &buf[ ix ], "[end", 4 ) == 0 )) {
+	    if ( gpsDebug( gps ) > 1 ) {
+		warnx( "...end" );
+	    }
 	    state = START;
 	}
 
@@ -131,8 +352,14 @@ gpsFormat( GpsHandle gps, FILE * stream )
 	    }
 	    continue;
 	  case WAYPOINTS:
+	    entry = scanWaypoint( gps, &buf[ ix ], state );
+	    break;
 	  case ROUTES:
-	    entry = scanWaypoint( gps, &buf[ ix ] );
+	    if ( buf[ ix ] == '*' ) {
+		entry = scanRoute( gps, &buf[ ix ] );
+	    } else {
+		entry = scanWaypoint( gps, &buf[ ix ], state );
+	    }
 	    break;
 	  case TRACKS:
 	    entry = scanTrack( gps, &buf[ ix ] );

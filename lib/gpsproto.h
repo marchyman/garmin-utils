@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsproto.h,v 1.1 1998/05/12 05:01:15 marc Exp $
+ *	$Id: gpsproto.h,v 1.2 1998/05/13 04:03:29 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -33,4 +33,10 @@
      * Raw input buffer -- read up to this many characters at a time
      */
 #define GPS_BUF_LEN 512
+
+    /*
+     * Size of an application data buffer.  This is large enough to
+     * hold the frame type plus the largest allowable frame.
+     */
+#define GPS_FRAME_MAX	256
 

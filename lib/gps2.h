@@ -1,5 +1,5 @@
 /*
- *	$Id: gps2.h,v 1.1 1998/05/12 05:01:15 marc Exp $
+ *	$Id: gps2.h,v 1.2 1998/05/13 04:03:26 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -14,12 +14,6 @@
     /*
      * Garmin GPS layer 2 functions.
      */
-
-    /*
-     * Size of an application data buffer.  This is large enough to
-     * hold the frame type plus the largest allowable frame.
-     */
-#define GPS_FRAME_MAX	256
 
     /*
      * Send a buffer containing layer 3 data using garmin layer 2 framing
