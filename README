@@ -1,4 +1,4 @@
-$Id: README,v 1.1 1998/06/05 18:50:58 marc Exp $
+$Id: README,v 1.2 1998/06/05 18:56:22 marc Exp $
 
 GARMIN upload/download utilities for the Garmin GPS III unit.  These
 compile/work on OpenBSD.  They may compile/work on other *BSD based
@@ -19,7 +19,7 @@ To install:
  1) Look at Makefile.inc in this directory.  This is where install locations
     and default serial port may be modified.
 
- 2) make
+ 2) make depend && make
     This generates libgarmin and the gardump and garload utilities
 
  3) make install
