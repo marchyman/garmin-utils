@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsformat.h,v 1.1 1998/05/12 23:13:05 marc Exp $
+ *	$Id: gpsformat.h,v 1.2 1998/05/14 01:38:44 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -23,6 +23,7 @@ typedef struct gpsListEntry {
 } GpsListEntry;
 
 typedef struct gpsListHead {
+    int type;				/* protocol type */
     GpsListEntry * head;		/* first entry in list */
     GpsListEntry * tail;		/* last entryin list */
     int count;				/* number of entries */

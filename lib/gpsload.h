@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsdump.h,v 1.2 1998/05/14 01:38:41 marc Exp $
+ *	$Id: gpsload.h,v 1.1 1998/05/14 01:38:46 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -12,19 +12,16 @@
  */
 
     /*
-     * Garmin GPS device command and transfer protocols
+     * Garmin GPS load protocol
      *
-     * dev1 -> dev2:	command
-     * dev2 -> dev1:	transfer begin
-     * dev2 -> dev1:	transfer data
-     * dev2 -> dev1:	transfer end
+     * dev1 -> dev2:	transfer begin
+     * dev1 -> dev2:	transfer data
+     * dev1 -> dev2:	transfer end
      */
 
     /*
-     * Issue a device command and wait for an ack.  Returns
-     *	-1:	command failed
-     *	0:	command naked
-     *	1:	command acked.
+     * Load the lists specified.  Return 1 if upload successful,
+     * -1 otherwise.
      */
-int gpsCmd( GpsHandle gps, GpsCmdId cmd );
+int gpsLoad( GpsHandle gps, GpsLists * lists );
 

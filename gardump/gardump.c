@@ -1,5 +1,5 @@
 /*
- *	$Id: gardump.c,v 1.2 1998/05/12 23:12:56 marc Exp $
+ *	$Id: gardump.c,v 1.3 1998/05/14 01:38:33 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <err.h>
 
+#include "gpsproto.h"
 #include "gps1.h"
 #include "gpsversion.h"
 #include "gpsdump.h"
@@ -112,13 +113,13 @@ main( int argc, char * argv[] )
 	/* does not return */
     }
     if ( waypoints ) {
-	gpsCmd( gps, CMD_GET_WPT );
+	gpsCmd( gps, CMD_WPT );
     }
     if ( routes ) {
-	gpsCmd( gps, CMD_GET_RTE );
+	gpsCmd( gps, CMD_RTE );
     }
     if ( tracks ) {
-	gpsCmd( gps, CMD_GET_TRK );
+	gpsCmd( gps, CMD_TRK );
     }
     gpsClose( gps );
 

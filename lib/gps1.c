@@ -1,5 +1,5 @@
 /*
- *	$Id: gps1.c,v 1.1 1998/05/12 05:01:15 marc Exp $
+ *	$Id: gps1.c,v 1.2 1998/05/14 01:38:40 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -77,8 +77,10 @@ gpsOpen( const char * port, int debug )
 	/* does not return */
     }
     termios.c_ispeed = termios.c_ospeed = 9600;
+    termios.c_iflag = 0;
     termios.c_oflag = 0;	/* (ONLRET) */
     termios.c_cflag = CS8 | CREAD | CLOCAL;
+    termios.c_lflag = 0;
     memset( termios.c_cc, -1, NCCS );
     termios.c_cc[VMIN] = 1;
     termios.c_cc[VTIME] = 0;

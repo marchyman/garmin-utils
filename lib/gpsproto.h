@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsproto.h,v 1.2 1998/05/13 04:03:29 marc Exp $
+ *	$Id: gpsproto.h,v 1.3 1998/05/14 01:38:47 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -39,4 +39,14 @@
      * hold the frame type plus the largest allowable frame.
      */
 #define GPS_FRAME_MAX	256
+
+    /*
+     * Gps command (upload/download) types.
+     */
+typedef enum {
+    CMD_ABORT_XFR = 0,
+    CMD_RTE = 4,
+    CMD_TRK = 6,
+    CMD_WPT = 7
+} GpsCmdId;
 

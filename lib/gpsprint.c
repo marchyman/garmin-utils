@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsprint.c,v 1.1 1998/05/12 05:01:15 marc Exp $
+ *	$Id: gpsprint.c,v 1.2 1998/05/14 01:38:46 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -29,14 +29,13 @@
 
     /*
      * Given the address to the start of a `semicircle' in data received
-     * from a gps unit convert it to a float.
+     * from a gps unit convert it to a double.
      */
-static float
-semicircleToFloat( const char * s )
+static double
+semicircleToDouble( const unsigned char * s )
 {
-    float conv = 180.0 / ( 1L << 31 );
     long work = s[ 0 ] + ( s[ 1 ] << 8 ) + ( s[ 2 ] << 16 ) + ( s[ 3 ] << 24 );
-    return work * conv;
+    return work * 180.0 / (double) (0x80000000);
 }
 
 
@@ -54,15 +53,15 @@ semicircleToFloat( const char * s )
      *	 1	display option (1: symbol, 3: sym + name, 5: sym + comment
      *
      * printed as:
-     * xxxxxx -99.99999 -999.99999 sss/d comments
+     * xxxxxx -99.9999999999 -999.9999999999 sssss/d comments
      */
 static void
 printWaypoint( const unsigned char * wpt, int len )
 {
     unsigned char name[ 8 ];
     unsigned char comment[ 44 ];
-    float lat = semicircleToFloat( &wpt[ 7 ] );
-    float lon = semicircleToFloat( &wpt[ 11 ] );
+    double lat = semicircleToDouble( &wpt[ 7 ] );
+    double lon = semicircleToDouble( &wpt[ 11 ] );
     int sym = 0;
     int disp = 0;
 
@@ -76,7 +75,8 @@ printWaypoint( const unsigned char * wpt, int len )
 	    disp = wpt[ 65 ];
 	}
     }
-    printf( "%s %+10f %+11f %5d/%d %s\n", name, lat, lon, sym, disp, comment );
+    printf( "%s %14.10f %15.10f %5d/%d %s\n", name, lat, lon,
+	    sym, disp, comment );
 }
 
     /*
@@ -116,8 +116,8 @@ printRteHdr( const unsigned char * hdr, int len )
 static void
 printTrack( const unsigned char * trk, int len )
 {
-    float lat = semicircleToFloat( &trk[ 1 ] );
-    float lon = semicircleToFloat( &trk[ 5 ] );
+    double lat = semicircleToDouble( &trk[ 1 ] );
+    double lon = semicircleToDouble( &trk[ 5 ] );
     time_t time = UNIX_TIME_OFFSET + trk[ 9 ] + ( trk[ 10 ] << 8 ) +
 		  ( trk[ 11 ] << 16 ) + ( trk[ 12 ] << 24 );
     const char * startstring = trk[ 13 ] ? " start" : "";
@@ -131,7 +131,7 @@ printTrack( const unsigned char * trk, int len )
     } else {
 	strcpy( timestring, "unknown" );
     }
-    printf( "%+10f %+11f %s%s\n", lat, lon, timestring, startstring );
+    printf( "%14.10f %15.10f %s%s\n", lat, lon, timestring, startstring );
 }
 
 int
@@ -150,13 +150,13 @@ gpsPrint( GpsHandle gps, GpsCmdId cmd, const unsigned char * packet, int len )
 	    count = 0;
 	    limit = packet[ 1 ] + ( packet[ 2 ] << 8 );
 	    switch ( cmd ) {
-	      case CMD_GET_RTE:
+	      case CMD_RTE:
 		type = "routes";
 		break;
-	      case CMD_GET_TRK:
+	      case CMD_TRK:
 		type = "tracks";
 		break;
-	      case CMD_GET_WPT:
+	      case CMD_WPT:
 		type = "waypoints";
 		break;
 	      default:

@@ -1,5 +1,5 @@
 /*
- *	$Id: garload.c,v 1.2 1998/05/12 23:12:59 marc Exp $
+ *	$Id: garload.c,v 1.3 1998/05/14 01:38:37 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -21,6 +21,7 @@
 #include "gps1.h"
 #include "gpsversion.h"
 #include "gpsformat.h"
+#include "gpsload.h"
 
 static void
 usage( const char* prog, const char* err, ... )
@@ -89,6 +90,8 @@ main( int argc, char * argv[] )
 	errx( 1, "no valid GPS data found" );
 	/* does not return */
     }
-    ;;;
+    if ( gpsLoad( gps, lists ) < 0 ) {
+	errx( 1, "failure uploading GPS unit" );
+    }
     return 0;
 }

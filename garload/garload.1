@@ -1,4 +1,4 @@
-.\"	$Id: garload.1,v 1.1 1998/05/12 05:01:15 marc Exp $
+.\"	$Id: garload.1,v 1.2 1998/05/14 01:38:35 marc Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -99,6 +99,10 @@ Terminate any existing upload.
 .Pp
 Each tranfer should be terminated by an `[end transfer...] record before
 the next transfer is started.
+.Nm
+will ignore any line where the first non-blank character is ``#''. This
+allows comments to be added to files that will be processed by
+.Nm garload .
 .\".SH ENVIRONMENT
 .\".SH FILES
 .\".SH EXAMPLES

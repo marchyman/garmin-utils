@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsformat.c,v 1.2 1998/05/13 04:03:28 marc Exp $
+ *	$Id: gpsformat.c,v 1.3 1998/05/14 01:38:43 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -100,15 +100,14 @@ addString( unsigned char * buf, unsigned char * data, int len )
 }
 
     /*
-     * convert the given float to a garmin `semicircle' and stuff
+     * convert the given double to a garmin `semicircle' and stuff
      * it in to b (assumed to be at least 4 characters wide) in
      * the garmin (little endian) order.
      */
 static void
-floatToSemicircle( float f, unsigned char * b )
+doubleToSemicircle( double f, unsigned char * b )
 {
-    float conv = 180.0 / (float) ( 1L << 31 );
-    long work = (long) ( f / conv );
+    long work = f * ( 0x80000000 ) / 180.0;
     b[ 0 ] = (unsigned char) work;
     b[ 1 ] = (unsigned char) ( work >> 8 );
     b[ 2 ] = (unsigned char) ( work >> 16 );
@@ -163,17 +162,18 @@ static GpsListEntry *
 scanWaypoint( GpsHandle gps, unsigned char * buf, FormatState state )
 {
     char name[ 8 ];		/* waypoint name */
-    float lat;			/* latitude */
-    float lon;			/* longitude */
+    double lat;			/* latitude */
+    double lon;			/* longitude */
     int sym;			/* symbol */
     int disp;			/* symbol display mode */
     char comment[ 44 ];		/* comment */
     int result;			/* input scan results */
     unsigned char * data;	/* gps data buffer */
     int len;			/* gps data len */
+    int ix;			/* general use index */
 
     /* break the input data up into its component fields */
-    result = sscanf( buf, "%6c %f %f %d/%d %40c",
+    result = sscanf( buf, "%6c %lf %lf %d/%d %40c",
 		    name, &lat, &lon, &sym, &disp, comment );
     if ( result!= 6 ) {
 	if ( gpsDebug( gps ) ) {
@@ -199,15 +199,16 @@ scanWaypoint( GpsHandle gps, unsigned char * buf, FormatState state )
     }
 
     /* bytes 2-7: waypoint name */
-    memcpy( &data[ len ], name, 6 );
-    len += 6;
+    for ( ix = 0; ix < 6; ix += 1 ) {
+	data[ len++ ] = toupper( name[ ix ] );
+    }
 
     /* bytes 8-11: latitude */
-    floatToSemicircle( lat, &data[ len ] );
+    doubleToSemicircle( lat, &data[ len ] );
     len += 4;
 
     /* bytes 12-15: longitude */
-    floatToSemicircle( lon, &data[ len ] );
+    doubleToSemicircle( lon, &data[ len ] );
     len += 4;
 
     /* bytes 16-19: zero */
@@ -244,8 +245,8 @@ scanWaypoint( GpsHandle gps, unsigned char * buf, FormatState state )
 static GpsListEntry *
 scanTrack( GpsHandle gps, unsigned char * buf )
 {
-    float lat;			/* latitude */
-    float lon;			/* longitude */
+    double lat;			/* latitude */
+    double lon;			/* longitude */
     unsigned char time[ 16 ];	/* track time (not used for upload) */
     unsigned char start[ 8 ];	/* start flag */
     int result;			/* input scan results */
@@ -255,7 +256,7 @@ scanTrack( GpsHandle gps, unsigned char * buf )
     int startFlag = 0;		/* start of track */
 
     /* break the input data up into its component fields */
-    result = sscanf( buf, "%f %f %15s %7s", &lat, &lon, time, start );
+    result = sscanf( buf, "%lf %lf %15s %7s", &lat, &lon, time, start );
     switch ( result ) {
       case 2:
       case 3:
@@ -280,11 +281,11 @@ scanTrack( GpsHandle gps, unsigned char * buf )
     data[ len++ ] = trkData;
 
     /* byte 2-5: latitude */
-    floatToSemicircle( lat, &data[ len ] );
+    doubleToSemicircle( lat, &data[ len ] );
     len += 4;
 
     /* byte 6-9: longitude */
-    floatToSemicircle( lon, &data[ len ] );
+    doubleToSemicircle( lon, &data[ len ] );
     len += 4;
 
     /* bytes 10-13: time (uploaded as zero */
@@ -346,6 +347,19 @@ gpsFormat( GpsHandle gps, FILE * stream )
 		cur->next = 0;
 		cur->list = (GpsListHead *) malloc( sizeof( GpsListHead ) );
 		assert( cur->list );
+		switch ( state ) {
+		  case WAYPOINTS:
+		    cur->list->type = CMD_WPT;
+		    break;
+		  case ROUTES:
+		    cur->list->type = CMD_RTE;
+		    break;
+		  case TRACKS:
+		    cur->list->type = CMD_TRK;
+		    break;
+		  case START:
+		    break;
+		}
 		cur->list->head = 0;
 		cur->list->tail = 0;
 		cur->list->count = 0;
