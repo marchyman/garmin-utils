@@ -1,5 +1,8 @@
-/* $snafu: gpslib.h,v 1.10 2003/04/24 19:37:39 marc Exp $ */
-/* PUBLIC DOMAIN April 2003 <marc@snafu.org> */
+/*
+ * $snafu: gpslib.h,v 1.11 2003/06/12 16:45:00 marc Exp $
+ *
+ * Public Domain, 2003, Marco S Hyman <marc@snafu.org>
+ */
 
 /*
  * ascii command characters

@@ -1,3 +1,9 @@
+# $snafu: NEWS,v 1.8 2003/06/12 16:44:59 marc Exp $
+
+List of changes/additions (for 1.9x)
+
+ - cosmetic changes for release testing
+
 List of changes/additions (for 1.9)
 
  - upload/download download of auto-routed routes doesn't generate a

@@ -1,4 +1,4 @@
-# $snafu: Makefile.inc,v 1.15 2003/04/25 03:35:50 marc Exp $
+# $snafu: Makefile.inc,v 1.16 2003/06/12 16:44:59 marc Exp $
 #
 # Default installation directories
 #
@@ -12,7 +12,7 @@ SERIAL_PORT?=	-DDEFAULT_PORT=\"/dev/tty00\"
 
 # Program version
 #
-VERSION?=	-DVERSION=\"1.91\"
+VERSION?=	-DVERSION=\"1.92\"
 
 # Which serial I/O code to use, possible choices are
 #   BSD	   for BSD-based systems

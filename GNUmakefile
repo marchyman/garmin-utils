@@ -1,7 +1,7 @@
-# $snafu: GNUmakefile,v 1.1 2001/05/02 00:34:50 marc Exp $
+# $snafu: GNUmakefile,v 1.2 2003/06/12 16:44:59 marc Exp $
 #
 # gardump/garload: programs to dump/load waypoints, routes, and tracks from
-# a garmin gps unit.  Tested on III, 12 and 12XL units.
+# a garmin gps unit.
 #
 
 all: LIB GARDUMP GARLOAD
