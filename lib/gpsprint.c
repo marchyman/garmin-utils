@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.22 2003/04/16 23:08:37 marc Exp $
+ *	$snafu: gpsprint.c,v 1.23 2003/04/17 23:08:29 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -106,7 +106,7 @@ out:
 union {
 	u_int32_t u;
 	float f;
-} no_val = { 0x68045951 };
+} no_val = { 0x69045951 };
 
 static float
 get_float(const u_char * s)
@@ -125,7 +125,7 @@ get_float(const u_char * s)
 static union {
 	u_int32_t u;
 	float f;
-} no_val = { 0x51590468 };
+} no_val = { 0x51590469 };
 
 static float
 get_float(const u_char * s)
@@ -250,6 +250,7 @@ print_waypoint(const u_char *wpt, int len, int type)
 		sym = get_int(wpt, len, wi->sym_off, wi->sym_len);
 		dsp = get_int(wpt, len, wi->disp_off, wi->disp_len);
 		cmnt = get_string(wpt, len, wi->cmnt_off, wi->cmnt_len);
+
 		if (alt == no_val.f)
 			printf("%s %10f %11f %5ld/%ld %s\n",
 			       name == NULL ? "-" : name, lat, lon,

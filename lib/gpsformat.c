@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.16 2003/04/16 23:08:37 marc Exp $
+ *	$snafu: gpsformat.c,v 1.17 2003/04/17 23:08:29 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -28,7 +28,7 @@ enum {
  * Magic value that translates to a float value of 1.0e25 in the GPS
  * and indicates an unsupported or unknown value.
  */
-static u_char no_val[] = { 0x51, 0x59, 0x04, 0x48 };
+static u_char no_val[] = { 81, 89, 4, 105 };
 
 /*
  * Figure out the operating state from the data in the buffer arg.
