@@ -1,5 +1,5 @@
 /*
- *	$Id: gpsdisplay.c,v 1.1 1998/05/12 05:01:15 marc Exp $
+ *	$Id: gpsdisplay.c,v 1.2 1998/06/05 18:51:06 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -13,6 +13,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <strings.h>
 
 #include "gpsdisplay.h"
 

@@ -1,4 +1,4 @@
-.\"	$Id: gardump.1,v 1.1 1998/05/12 05:01:16 marc Exp $
+.\"	$Id: gardump.1,v 1.2 1998/06/05 18:50:58 marc Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -18,7 +18,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d Ar debug-level
-.Op Fl wrt
+.Op Fl vwrt
 .Op Fl p Ar port
 .Sh DESCRIPTION
 .Nm
@@ -50,6 +50,8 @@ layer 2 protocol machine.  Data is written to stdout.
 Perform a hex dump of all data read from/written to the GPS
 unit.
 .El
+.It Fl v
+Display the software version on stderr and exit with a return code of 1.
 .It Fl w
 Retrieve waypoints and write them to stdout.
 .It Fl r

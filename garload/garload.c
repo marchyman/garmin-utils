@@ -1,5 +1,5 @@
 /*
- *	$Id: garload.c,v 1.3 1998/05/14 01:38:37 marc Exp $
+ *	$Id: garload.c,v 1.4 1998/06/05 18:51:03 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -32,7 +32,7 @@ usage( const char* prog, const char* err, ... )
 	vfprintf( stderr, err, ap);
 	va_end( ap );
     }
-    fprintf( stderr, "usage: %s [-d debug-level] [-wrt] [-p port]\n", prog );
+    fprintf( stderr, "usage: %s [-d debug-level] [-v] [-p port]\n", prog );
     exit( 1 );
 }
 
@@ -47,7 +47,7 @@ main( int argc, char * argv[] )
     GpsHandle gps;
     GpsLists * lists;
 
-    while (( opt = getopt( argc, argv, "d:p:" )) != -1 ) {
+    while (( opt = getopt( argc, argv, "d:vp:" )) != -1 ) {
 	switch ( opt ) {
 	  case 'd':
 	    debug = strtol( optarg, &rem, 0 );
@@ -68,6 +68,9 @@ main( int argc, char * argv[] )
 		warnx( "using serial port `%s'", port );
 	    }
 	    break;
+	  case 'v':
+	    errx( 1, "software version %s", VERSION );
+	    /* does not return */
 	  case '?':
 	  default:
 	    usage( argv[ 0 ], 0 );

@@ -1,5 +1,5 @@
 /*
- *	$Id: gardump.c,v 1.3 1998/05/14 01:38:33 marc Exp $
+ *	$Id: gardump.c,v 1.4 1998/06/05 18:51:00 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -32,7 +32,7 @@ usage( const char* prog, const char* err, ... )
 	vfprintf( stderr, err, ap);
 	va_end( ap );
     }
-    fprintf( stderr, "usage: %s [-d debug-level] [-wrt] [-p port]\n", prog );
+    fprintf( stderr, "usage: %s [-d debug-level] [-vwrt] [-p port]\n", prog );
     exit( 1 );
 }
 
@@ -49,7 +49,7 @@ main( int argc, char * argv[] )
     char* rem;
     GpsHandle gps;
 
-    while (( opt = getopt( argc, argv, "d:wrtp:" )) != -1 ) {
+    while (( opt = getopt( argc, argv, "d:vwrtp:" )) != -1 ) {
 	switch ( opt ) {
 	  case 'd':
 	    debug = strtol( optarg, &rem, 0 );
@@ -64,6 +64,9 @@ main( int argc, char * argv[] )
 		warnx( "debug level set to %d", debug );
 	    }
 	    break;
+	  case 'v':
+	    errx( 1, "software version %s", VERSION );
+	    /* does not return */
 	  case 'w':
 	    waypoints = 1;
 	    if ( debug > 1 ) {

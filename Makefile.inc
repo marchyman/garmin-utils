@@ -1,4 +1,4 @@
-# $Id: Makefile.inc,v 1.1 1998/05/12 05:01:14 marc Exp $
+# $Id: Makefile.inc,v 1.2 1998/06/05 18:50:56 marc Exp $
 #
 # Default installation directories
 #
@@ -10,11 +10,15 @@ MANDIR?=	${PREFIX}/man/cat
 #
 SERIAL_PORT?=	-DDEFAULT_PORT=\"/dev/cuab\"
 
+# Program version
+#
+VERSION?=	-DVERSION=\"1.0\"
+
 # C options
 #
 COPTS+= -g -I${.CURDIR}/../lib
 COPTS+=	-Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Werror
-COPTS+= ${SERIAL_PORT}
+COPTS+= ${SERIAL_PORT} ${VERSION}
 
 # Figure out where the library lives for proper dependencies
 #
