@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.14 2003/04/11 01:21:49 marc Exp $
+ *	$snafu: gpsprint.c,v 1.15 2003/04/11 02:53:13 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -151,76 +151,53 @@ struct wpt_info {
 };
 
 static struct wpt_info winfo[] = {
-	{ D100,  7, 11,  1, 6,  0, 0,  0, 0, 19, 40 },
-	{ D101,  7, 11,  1, 6, 63, 1,  0, 0, 19, 40 },
-	{ D102,  7, 11,  1, 6, 63, 2,  0, 0, 19, 40 },
-	{ D103,  7, 11,  1, 6, 59, 1, 60, 1, 19, 40 },
-	{ D104,  7, 11,  1, 6, 63, 2, 65, 1, 19, 40 },
-	{ D105,  1,  5,  0, 0,  9, 2,  0, 0, 11,  0 },
-	{ D106, 15, 19,  0, 0, 23, 2,  0, 0, 25,  0 },
-	{ D107,  7, 11, 59, 60, 19 },
-	{ D108, 49, 25, 29, 5, -1, -1 },
+	{ D100,  7, 11, 1, 6,  0, 0,  0, 0, 19, 40 },
+	{ D101,  7, 11, 1, 6, 63, 1,  0, 0, 19, 40 },
+	{ D102,  7, 11, 1, 6, 63, 2,  0, 0, 19, 40 },
+	{ D103,  7, 11, 1, 6, 59, 1, 60, 1, 19, 40 },
+	{ D104,  7, 11, 1, 6, 63, 2, 65, 1, 19, 40 },
+	{ D105,  1,  5, 0, 0,  9, 2,  0, 0, 11, 40 },
+	{ D106, 15, 19, 0, 0, 23, 2,  0, 0, 25, 40 },
+	{ D107,  7, 11, 1, 6, 59, 1, 60, 1, 19, 40 },
+	{ D108, 25, 29, 0, 0,  5, 2,  3, 1, 49, 40 },
+	{ D109, 25, 29, 0, 0,  5, 2,  0, 0, 53, 40 }
+};
 
-/*
- * D100 waypoint format is:
- *   GPS 38/40/45 and GPS II
- *   xxxxxx -99.999999 -999.999999 0/0 comments
- *
- *	 1	packet type
- *	 6	name
- *	 4	lat
- *	 4	long
- *	 4	unused
- *	40	comment
- *
- *
- * D103 waypoint format is:
- *   GPS 12/12XL/48 and GPS II+
- *
- * ...
- *	59	symbol
- *	60	display option (0: sym + name, 1: symbol, 2: sym + comment)
- *
- *
- * D104 waypoint format is:
- *   GPS III/III+
- *   xxxxxx -99.999999 -999.999999 sssss/d comments
- *
- *	 1	packet type
- *	 6	name
- *	 4	lat
- *	 4	long
- *	 4	unused
- *	40	comment
- *	 4	distance in meters (float)
- *	 2	symbol
- *	 1	display option (1: symbol, 3: sym + name, 5: sym + comment
- *
- *
- * D108 waypoint format is:
- *  GPSMAP eMap
- *
- *	 1	packet type
- *	 1	class
- *	 1	color
- *	 1	display options
- *	 1	attributes
- *	 2	symbol type
- *	18	sub-class
- *	 4	lat
- *	 4	long
- *	 4	alt
- *	 4	depth
- *	 4	distance
- *	 2	state
- *	 2	country
- *	 var	ident, comment, facility, city, addr, cross_road
- *
- * D109 waypoint format is
- */
-static void
-printWaypoint(const unsigned char * wpt, int len, int wptType)
+static struct wpt_info *
+find_wpt_info(int type)
 {
+	for (ix = 0; ix < sizeof winfo / sizeof winfo[0]; ix++)
+		if (winfo[ix].wpt_type == type)
+			return &winfo[ix];
+	return NULL;
+}
+
+static void
+print_waypoint(const unsigned char *wpt, int len, int type)
+{
+	int ix;
+	double lat;
+	double lon;
+	char *name;
+	char *cmnt;
+
+	for (ix = 0; ix < sizeof winfo / sizeof winfo[0]; ix++)
+		if (winfo[ix].wpt_type == type) {
+			lat = semicircle2double(wpt[winfo[ix].lat_off]);
+			lon = semicircle2double(wpt[winfo[ix].long_off]);
+			if (winfo[ix].name_off) {
+				name = malloc(winfo[ix].name_len + 1);
+				if (name != NULL)
+					strlcpy(name, &wpt[winfo[ix].name_off],
+						winfo[ix].name_len + 1);
+			} else
+				name = NULL;
+
+			;;;
+			break;
+		}
+
+#if 0
     unsigned char name[8];
     unsigned char comment[44];
     double lat = semicircle2double(&wpt[7]);
@@ -272,6 +249,7 @@ printWaypoint(const unsigned char * wpt, int len, int wptType)
     } else {
         warnx ("unknown waypoint packet type: %d", wptType);
     }
+#endif
 }
 
     /*
