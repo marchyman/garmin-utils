@@ -1,20 +1,17 @@
 /* -*- tab-width: 4; -*-
- * $snafu: garload.c,v 1.9 2002/09/10 00:18:43 marc Exp $
+ * $snafu: garload.c,v 1.10 2003/04/11 01:21:48 marc Exp $
  *
  * Placed in the Public Domain by 1998 Marco S. Hyman
  */
 
+#include <err.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdarg.h>
-#include <err.h>
 
-#include "gps1.h"
-#include "gpsversion.h"
-#include "gpsformat.h"
-#include "gpsload.h"
+#include "gpslib.h"
 
 static void
 usage(const char* prog, const char* err, ...)

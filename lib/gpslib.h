@@ -1,4 +1,4 @@
-/* $snafu: gpslib.h,v 1.2 2003/04/10 20:50:22 marc Exp $ */
+/* $snafu: gpslib.h,v 1.3 2003/04/11 01:21:49 marc Exp $ */
 /* PUBLIC DOMAIN April 2003 <marc@snafu.org> */
 
 /*
@@ -98,8 +98,11 @@ int	gps_cmd(gps_handle, enum gps_cmd_id);
 int	gps_debug(gps_handle);
 void	gps_display(char, const unsigned char *, int);
 struct gps_lists *gps_format(gps_handle, FILE *);
-int	gps_get_rte_rte_hdr(gps_handle);
-int	gps_get_trk_trk_type(gps_handle);
+int	gps_get_rte_hdr_type(gps_handle);
+int	gps_get_rte_lnk_type(gps_handle);
+int	gps_get_rte_wpt_type(gps_handle);
+int	gps_get_trk_hdr_type(gps_handle);
+int	gps_get_trk_type(gps_handle);
 int	gps_get_wpt_type(gps_handle);
 int	gps_load(gps_handle, struct gps_lists *);
 gps_handle gps_open(const char *, int);
@@ -112,14 +115,12 @@ int	gps_send(gps_handle, const unsigned char *, int);
 int	gps_send_ack(gps_handle, unsigned char);
 int	gps_send_nak(gps_handle, unsigned char);
 int	gps_send_wait(gps_handle, const unsigned char *, int);
-void	gps_set_capability(gps_handle, int, int, int, int, int);
-void	gps_set_rte_rte_hdr(gps_handle, int);
-void	gps_set_rte_rte_link(gps_handle, int);
+void	gps_set_rte_hdr_type(gps_handle, int);
+void	gps_set_rte_lnk_type(gps_handle, int);
 void	gps_set_rte_wpt_type(gps_handle, int);
-void	gps_set_trk_trk_hdr(gps_handle, int);
-void	gps_set_trk_trk_type(gps_handle, int);
+void	gps_set_trk_hdr_type(gps_handle, int);
+void	gps_set_trk_type(gps_handle, int);
 void	gps_set_wpt_type(gps_handle, int);
-void	gps_set_wpt_wpt_type(gps_handle, int);
 int	gps_version(gps_handle);
 int	gps_write(gps_handle, const unsigned char *, int);
 

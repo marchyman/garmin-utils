@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps2.c,v 1.6 2003/04/10 20:50:22 marc Exp $
+ *	$snafu: gps2.c,v 1.7 2003/04/11 01:21:49 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -136,6 +136,8 @@ gps_send_nak(gps_handle gps, unsigned char type)
  *	0 - timeout
  *	-1 - error
  */
+#define READ_TO	10
+
 int
 gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 {
@@ -173,7 +175,7 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 
 		/* start receiving characters into buf.  An end of buffer or
 		   a DLE ETX sequence will terminate the reception.  Each
-		   read is given a 10 second timeout -- if we time out
+		   read is given a READ_TO second timeout -- if we time out
 		   assume the gps died and return an error. */
 
 		ptr = buf;
@@ -182,7 +184,7 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 		sum = 0;
 		len = 0;
 		do {
-			stat = gps_read(gps, ptr, 10);
+			stat = gps_read(gps, ptr, READ_TO);
 			if (stat != 1) {
 				if (gps_debug(gps) > 1)
 					warnx("frame error: gps recv");
@@ -233,6 +235,7 @@ gps_recv(gps_handle gps, int to, unsigned char * buf, int * cnt)
 				/* bad checksum -- try again */
 				if (gps_debug(gps) > 3)
 					gps_display('!', buf, len);
+				return -1;
 			}
 		} else {
 			/* frame too large, return error */

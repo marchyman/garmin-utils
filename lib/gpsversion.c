@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsversion.c,v 1.4 2001/12/16 00:56:16 marc Exp $
+ *	$snafu: gpsversion.c,v 1.5 2003/04/11 01:21:49 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -8,10 +8,7 @@
 #include <stdlib.h>
 #include <err.h>
 
-#include "gps1.h"
-#include "gpsprod.h"
-#include "gpscap.h"
-#include "gpsversion.h"
+#include "gpslib.h"
 
     /*
      * Request the unit version and output to stdout.  Wait for a

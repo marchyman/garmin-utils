@@ -1,17 +1,13 @@
 /*
- *	$snafu: gpsload.c,v 1.6 2003/04/10 20:50:22 marc Exp $
+ *	$snafu: gpsload.c,v 1.7 2003/04/11 01:21:49 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
 
-#include <stdio.h>
 #include <err.h>
+#include <stdio.h>
 
-#include "gpsproto.h"
-#include "gps1.h"
-#include "gps2.h"
-#include "gpsformat.h"
-#include "gpsload.h"
+#include "gpslib.h"
 
     /*
      * Garmin GPS load protocol

@@ -1,19 +1,17 @@
 /*
- *	$snafu: gpsformat.c,v 1.8 2003/04/10 20:50:22 marc Exp $
+ *	$snafu: gpsformat.c,v 1.9 2003/04/11 01:21:49 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
 
 #include <assert.h>
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 
-#include "gpsproto.h"
-#include "gps1.h"
-#include "gpsformat.h"
+#include "gpslib.h"
 
 typedef enum {
     START,
