@@ -1,4 +1,4 @@
-# $Id: Makefile.inc,v 1.3 1998/08/28 20:40:27 marc Exp $
+# $Id: Makefile.inc,v 1.4 1999/04/26 01:12:59 marc Exp $
 #
 # Default installation directories
 #
@@ -12,7 +12,7 @@ SERIAL_PORT?=	-DDEFAULT_PORT=\"/dev/cua00\"
 
 # Program version
 #
-VERSION?=	-DVERSION=\"1.1\"
+VERSION?=	-DVERSION=\"1.2\"
 
 # C options
 #
