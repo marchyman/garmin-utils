@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps2.c,v 1.11 2003/04/14 07:16:21 marc Exp $
+ *	$snafu: gps2.c,v 1.12 2003/04/14 20:46:09 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -254,11 +254,11 @@ gps_recv(gps_handle gps, int to, u_char *buf, int * cnt)
  *	-1 = other
  */
 int
-gps_wait(gps_handle gps, char packet, int timeout)
+gps_wait(gps_handle gps, u_char typ, int timeout)
 {
 	u_char *response = malloc(GPS_FRAME_MAX);
 	int result = -1;
-	int retries = 5;
+	int retries = 3;
 	int resplen;
 
 	if (response)
@@ -269,14 +269,16 @@ gps_wait(gps_handle gps, char packet, int timeout)
 			if (resplen > 2)
 				switch (response[0]) {
 				case ack:
-					if (response[1] == packet)
+					if (response[1] == typ)
 					        result = 1;
 					break;
 				case nak:
-					if (response[1] == packet)
+					if (response[1] == typ)
 						result = 0;
 					break;
 				}
+			gps_printf(gps, 3, __func__ ": %d %d %d %d\n", resplen,
+				   response[0], response[1], result);
 		} while (result == -1 && retries--);
 
 	if (response)
@@ -303,7 +305,7 @@ gps_send_wait(gps_handle gps, const u_char *buf, int cnt, int timeout)
 			gps_display('}', buf, cnt);
 		do {
 			if (gps_write(gps, data, len) == 1)
-				ok = gps_wait(gps, *data, timeout);
+				ok = gps_wait(gps, *buf, timeout);
 		} while (ok == 0 && retries--);
 	}
 	if (data)

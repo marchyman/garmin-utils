@@ -1,4 +1,4 @@
-/* $snafu: gpslib.h,v 1.7 2003/04/14 07:16:21 marc Exp $ */
+/* $snafu: gpslib.h,v 1.8 2003/04/14 20:46:09 marc Exp $ */
 /* PUBLIC DOMAIN April 2003 <marc@snafu.org> */
 
 /*
@@ -139,6 +139,6 @@ void	gps_set_trk_hdr_type(gps_handle, int);
 void	gps_set_trk_type(gps_handle, int);
 void	gps_set_wpt_type(gps_handle, int);
 int	gps_version(gps_handle);
-int	gps_wait(gps_handle, char, int);
+int	gps_wait(gps_handle, u_char, int);
 int	gps_write(gps_handle, const u_char *, int);
 
