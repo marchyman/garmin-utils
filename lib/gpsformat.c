@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsformat.c,v 1.27 2003/09/27 05:50:33 marc Exp $
+ * $snafu: gpsformat.c,v 1.28 2003/10/06 19:06:31 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -283,7 +283,7 @@ d105_wpt(int state, double lat, double lon, char *cmnt, int sym)
 	len += 4;
 
 	/* byte 5-8: longitude */
-	double2semicircle(lat, &data[len]);
+	double2semicircle(lon, &data[len]);
 	len += 4;
 
 	/* byte 9-10: symbol */
@@ -405,7 +405,7 @@ d108_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 	len += 4;
 
 	/* byte 29-32: longitude */
-	double2semicircle(lat, &data[len]);
+	double2semicircle(lon, &data[len]);
 	len += 4;
 
 	/* byte 33-36: alt */
