@@ -1,7 +1,14 @@
-$snafu: README,v 1.10 2003/04/11 23:46:53 marc Exp $
+$snafu: README,v 1.11 2003/04/25 03:35:50 marc Exp $
+
+*****
+THE DATA FORMAT OF THIS VERSION IS INCOMPATIBLE WITH VERSIONS PRIOR TO 1.91.
+You will not be able to upload data saved with previous versions of the
+software.   The easiest way to convert the data formats is to upload using
+an older version of the software then download using this version.
+*****
 
 GARMIN upload/download utilities for the Garmin GPS 12, 12XL, 48, III, and
-III+ units.  Starting with version 1.9 the eMap, eTrex, and other modern
+III+ units.  Starting with version 1.9 the eMap, eTrex, V and other modern
 units are supported.
 
 These utilities compile/work on OpenBSD and Linux.  They may compile/work
@@ -14,9 +21,6 @@ for a Y2K fix and support for the different waypoint data found
 in the Garmin GPS 12/12XL/48 devices. They hold the copyrights on their
 changes.
 
-The "Y2K fix" is to change the format of the timestamp in tracklogs
-from "yymmddhhmss" to "yyyy-mm-dd hh:mm:ss". A script, fixtrack,
-is included to transform existing track logs to the new format.
 
 To install (BSD):
 
@@ -40,12 +44,10 @@ To install (Linux)
  2) make
     This generates libgarmin and the gardump and garload utilities
 
- 3) Copy binaries and manpages to their locations.
+ 3) Copy binaries and man pages to their locations.
 
 See the man pages for instructions on use.  Unless changed in step 1,
-both programs look for "/dev/gps".   Create a symbolic link named
-/dev/gps pointing to the serial port connected to your gps, e.g.
-/dev/cua00.
+both programs look for "/dev/tty00" (BSD) or "/dev/gps" (Linux).
 
 Questions/comments/bitches to marc@snafu.org.  Note: these do what
 I want them to do.  Grigory and Vladislav added code to make it do
