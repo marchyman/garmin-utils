@@ -1,11 +1,16 @@
-# $snafu: NEWS,v 2.1 2004/02/14 22:14:36 marc Exp $
+# $snafu: NEWS,v 2.2 2004/06/27 20:43:00 marc Exp $
 
-List of changes for (for 2.1)
+List of changes (for 2.2)
+
+ - Upload altitude in D108/D109 waypoints
+   Thanks to Michal Tyrala for the patch.
+
+List of changes (for 2.1)
 
  - strlcpy.c (only used in LINUX builds) needs stdio.h for gpslib.h
    Thanks to Greg Louis for the patch.
 
-List of changes for (for 2.0)
+List of changes (for 2.0)
 
  - fix pasto that use lat instead of long when coding d105 and d108
    waypoints.   Thanks to Frank Eberle for the notification of the problem.

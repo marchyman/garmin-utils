@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsformat.c,v 2.0 2003/10/06 19:13:52 marc Exp $
+ * $snafu: gpsformat.c,v 2.1 2004/06/27 20:43:00 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -360,8 +360,8 @@ d107_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 }
 
 static struct gps_list_entry *
-d108_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
-	 int disp, char *info)
+d108_wpt(int state, char *name, double lat, double lon, float alt, 
+		char *cmnt, int sym, int disp, char *info)
 {
 	u_char *data;
 	int len;
@@ -409,7 +409,7 @@ d108_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 	len += 4;
 
 	/* byte 33-36: alt */
-	memcpy(&data[len], no_val, 4);
+	memcpy(&data[len], &alt, 4);
 	len += 4;
 
 	/* byte 37-40: depth */
@@ -447,8 +447,8 @@ d108_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
 }
 
 static struct gps_list_entry *
-d109_wpt(int state, char *name, double lat, double lon, char *cmnt,
-	 int sym, int disp, char *info)
+d109_wpt(int state, char *name, double lat, double lon, float alt,
+		char *cmnt, int sym, int disp, char *info)
 {
 	u_char *data;
 	int len;
@@ -496,7 +496,7 @@ d109_wpt(int state, char *name, double lat, double lon, char *cmnt,
 	len += 4;
 
 	/* byte 33-36: alt */
-	memcpy(&data[len], no_val, 4);
+	memcpy(&data[len], &alt, 4);
 	len += 4;
 
 	/* byte 37-40: depth */
@@ -556,6 +556,7 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 	double lon;			/* longitude */
 	int sym;			/* symbol */
 	int disp;			/* symbol display mode */
+	float alt;			/* altitude */
 	char name[GPS_STRING_MAX + 1];	/* waypoint name */
 	char cmnt[GPS_STRING_MAX + 1];	/* comment */
 	char data[GPS_STRING_MAX + 1];	/* waypoint class and subclass */
@@ -567,6 +568,7 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 
 	*link = -1;
 	sym = disp = 0;
+	alt = 1.0e25;
 	name[0] = 0;
 	cmnt[0] = 0;
 	data[0] = 0;
@@ -587,6 +589,8 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 		switch (toupper(beg[-1])) {
 		case 'A':
 			/* altitude ignored */
+			/*  not anymore :-) */
+			sscanf(&beg[1], "%f", &alt);
 			break;
 		case 'W':
 			/* waypoint data (class and subclass) */
@@ -617,7 +621,7 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 		}
 	}
 
-	gps_printf(gps, 3, "wpt %f %f %d %d %s %s %d\n", lat, lon, sym,
+	gps_printf(gps, 3, "wpt %f %f %f %d %d %s %s %d\n", lat, lon, alt, sym,
 		   disp, name, cmnt, *link);
 
 	/* Now figure out which waypoint format is being used and
@@ -658,10 +662,10 @@ waypoints(gps_handle gps, u_char *buf, int state, int *link)
 		entry = d107_wpt(state, name, lat, lon, cmnt, sym, disp);
 		break;
 	case D108:
-		entry = d108_wpt(state, name, lat, lon, cmnt, sym, disp, data);
+		entry = d108_wpt(state, name, lat, lon, alt, cmnt, sym, disp, data);
 		break;
 	case D109:
-		entry = d109_wpt(state, name, lat, lon, cmnt, sym, disp, data);
+		entry = d109_wpt(state, name, lat, lon, alt, cmnt, sym, disp, data);
 		break;
 	default:
 		gps_printf(gps, 1, "unknown waypoint type %d\n", wpt);
