@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.11 2003/04/11 23:46:53 marc Exp $
+ *	$snafu: gpsformat.c,v 1.12 2003/04/12 01:27:09 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -13,7 +13,7 @@
 #include "gpslib.h"
 
 /*
- * decode state values
+ * decode states
  */
 enum {
 	START,
@@ -40,8 +40,6 @@ scan_state(u_char *buf)
 	return state;
 }
 
-#if 0
-
 /*
  * Build a list entry that contains the given data buffer.
  */
@@ -58,47 +56,61 @@ build_list_entry(u_char *data, int data_len)
 }
 
 
-    /*
-     * Append data to a buffer. The rules are:
-     *	1) data must be upper case
-     *	2) If data less than reqd len null terminate.
-     *	3) if data still less than reqd len then space pad.
-     * Returns pointer to buffer after data has been added.
-     */
-static u_char *
-addString( u_char * buf, u_char * data, int len )
+/*
+ * decode the buffer as a waypoint and format according to the required
+ * waypoint type.
+ */
+static struct gps_list_entry *
+waypoints(gps_handle gps, u_char *buf, int state)
 {
-    while ( len-- ) {
-	if ( *data == '\n' ) {
-	    *data = 0;
-	}
-	if ( *data ) {
-	    *buf++ = toupper( *data++ );
-	} else {
-	    *buf++ = 0;
-	    if ( len ) {
-		memset( buf, ' ', len );
-		buf += len;
-		len = 0;
-	    }
-	}
-    }
-    return buf;
+	u_char *data = 0;
+
+	;;;
+	return build_list_entry(data, 0);
 }
 
-    /*
-     * convert the given double to a garmin `semicircle' and stuff
-     * it in to b (assumed to be at least 4 characters wide) in
-     * the garmin (little endian) order.
-     */
-static void
-doubleToSemicircle( double f, u_char * b )
+#if 0
+
+/*
+ * Append data to a buffer. The rules are:
+ *	1) data inserted is upper case
+ *	2) If data len less than buffer len null terminate.
+ *	3) pad remainder of buffer with spaces
+ * Returns pointer to buffer after data has been added.
+ */
+static u_char *
+add_string(u_char *buf, u_char *data, int len)
 {
-    long work = f * ( 0x80000000 ) / 180.0;
-    b[ 0 ] = (u_char) work;
-    b[ 1 ] = (u_char) ( work >> 8 );
-    b[ 2 ] = (u_char) ( work >> 16 );
-    b[ 3 ] = (u_char) ( work >> 24 );
+	while ( len-- ) {
+		if (*data == '\n')
+			*data = 0;
+		if (*data)
+			*buf++ = toupper(*data++);
+		else {
+			*buf++ = 0;
+			if (len) {
+				memset(buf, ' ', len);
+				buf += len;
+				len = 0;
+			}
+		}
+	}
+	return buf;
+}
+
+/*
+ * convert the given double to a garmin `semicircle' and stuff
+ * it in to b (assumed to be at least 4 characters wide) in
+ * the garmin (little endian) order.
+ */
+static void
+double2semicircle(double f, u_char *b)
+{
+	long work = f * 0x80000000 / 180.0;
+	b[ 0 ] = (u_char) work;
+	b[ 1 ] = (u_char) ( work >> 8 );
+	b[ 2 ] = (u_char) ( work >> 16 );
+	b[ 3 ] = (u_char) ( work >> 24 );
 }
 
 static GpsListEntry *
@@ -391,7 +403,7 @@ gps_format(gps_handle gps, FILE *stream)
 			}
 			continue;
 		case WAYPOINTS:
-			/* entry = scanWaypoint( gps, &buf[ ix ], state ); */
+			entry = waypoints(gps, &buf[ix], state);
 			break;
 		case ROUTES:
 #if 0
