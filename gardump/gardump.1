@@ -1,4 +1,4 @@
-.\"	$snafu: gardump.1,v 1.7 2001/12/16 00:56:15 marc Exp $
+.\"	$snafu: gardump.1,v 1.8 2003/04/24 20:34:59 marc Exp $
 .\"
 .\"	Placed in the Public Domain by Marco S Hyman
 .\"
@@ -36,7 +36,7 @@ Retrieve the track log and write it to stdout.
 .It Fl u
 Retrieve the 
 .Tn UTC
-timesamp.
+timesamp and write it to stdout.
 .It Fl d Ar debug-level
 Enable various levels of debugging output.  Without this option
 debugging is disabled and only critical errors are written to
@@ -49,44 +49,61 @@ Write status messages to stderr.
 .It 3
 Write Garmin application protocol status to stderr.
 .It 4
-Perform a hex dump of all data going in and out of the Garmin
-layer 2 protocol machine.  Data is written to stdout.
+Perform a dump of all data going in and out of the Garmin
+layer 2 protocol machine.  Data sent to the
+.Tn GPS
+is prefixed by the symbol
+.Li } .
+Data received from the
+.Tn GPS
+is prefixed by the symbol
+.Li { .
+Data is written to stderr.
 .It 5
-Perform a hex dump of all data read from/written to the GPS
-unit.
+Perform a dump of all data read from/written to the GPS unit.
+Data sent to the
+.Tn GPS
+is prefixed by the symbol
+.Li > .
+Data received from the
+.Tn GPS
+is prefixed by the symbol
+.Li < .
+Data is written to stderr.
 .El
 .It Fl p Ar port
 Use
 .Ar port
 as the device connected to the GPS unit.  The default port is a
 compile time option that is typically set to
-.Pa /dev/gps ,
-which can be a symbolic link to the actual port used.
+.Pa /dev/tty00 .
 .El
 .Pp
 If no options are given
 .Nm
-will retrieve waypoints, routes, and tracks, in that order.  All
+will retrieve the
+.Tn UTC
+time, waypoints, routes, and tracks, in that order.  All
 are written to stdout.
 .\".Sh ENVIRONMENT
 .\".Sh FILES
 .Sh EXAMPLES
 The command:
 .Bd -literal -offset indent
-gardump -r
+gardump -w
 
 .Ed
 results in the output
 .Bd -literal -offset indent
-[routes, 7 records]
-**0 HOME-DUARTE
-HOME   -36.108810 +122.345230    10/3 CRTD 16:35 17-NOV-97
-MOMDAD -36.182732 +123.922882    10/5 CRTD 19:29 18-NOV-97
-DUARTE -37.246422 +123.794441    18/3 CRTD 07:46 01-MAR-98
-**1 HOME-GARMIN
-HOME   -36.108810 +122.345230    10/3 CRTD 16:35 17-NOV-97
-GARMIN -37.449306  +96.205276    18/3 GARMIN - U.S.A.
-[end transfer, 7/7 records]
+[gardump version 1.9]
+[product 155, version 207: GPS 5 Software Version 2.07]
+[waypoints, 3 records]
+# **n [route name]
+# lat long [A:alt] [S:sym] [D:display] [I:id] [C:cmnt] [W:wpt info] [L:link]
+ 37.109129 -121.016012 S:18 I:ANDRSN C:ANDERSEN'S SPLIT PEA
+ 36.524042 -118.765690 S:18 I:BCKEYE C:HWY 198
+ 38.667026 -120.122119 S:18 I:SILVER C:SILVER LAKE
+[end transfer, 3/3 records]
 
 .Ed
 .\".SH DIAGNOSTICS
@@ -95,9 +112,9 @@ GARMIN -37.449306  +96.205276    18/3 GARMIN - U.S.A.
 .\".Sh HISTORY
 .Sh AUTHORS
 Marco S. Hyman using information from the published GARMIN GPS Interface
-Specification, dated May 6, 1998 and the note OBSERVATIONS OF THE
+Specification, dated December 6, 1999 and the note OBSERVATIONS OF THE
 GARMIN-GARMIN PROTOCOL by william.soley@sun.com and werme@zk3.dec.com.
 .Sh BUGS
-Tested with a Garmin GPS III and GPS III+ using OpenBSD versions
-2.3 through 2.9 running on SPARC and i386.  May not work with other
+Tested with a Garmin GPS III+ and GPS V using OpenBSD versions
+2.3 through 3.3 running on SPARC and i386.  May not work with other
 GPS units or operating systems

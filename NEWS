@@ -1,7 +1,11 @@
 List of changes/additions (for 1.9)
 
+ - upload/download download of auto-routed routes doesn't generate a
+   user waypoint on devices such as the GPS V.
+
  - rewrite the output code to make it easier to support new protocols
-   and data formats.  Some output formats have changed.
+   and data formats.  Output formats have changed.   Output from previous
+   versions of the code can NOT be uploaded using this version.
 
  - rewrite the code that prepares data for upload to gps to handle the
    new output formats in addition to old formats.
@@ -24,13 +28,13 @@ List of changes/additions (for 1.7)
 
 - now in the public domain
 
-List of changes/additions (for 1.6).  See ChangeLog for more details.
+List of changes/additions (for 1.6).
 
 - Fix Linux/BSD generation bug.
 
 - Pass make options in a way compatible to all the *BSD variants.
 
-List of changes/additions (for 1.5).  See ChangeLog for more details.
+List of changes/additions (for 1.5).
 
 - bug (in fact, two of them) in lib/gpsload.c was fixed
 

@@ -1,4 +1,4 @@
-.\"	$snafu: garload.1,v 1.7 2001/12/16 00:56:15 marc Exp $
+.\"	$snafu: garload.1,v 1.8 2003/04/24 20:34:59 marc Exp $
 .\"
 .\"	Placed in the Public Domain by  Marco S. Hyman
 .\"
@@ -20,7 +20,7 @@ from standard input.  The data is expected to be in the format dumped
 by
 .Xr gardump 1 .
 The input can be re-directed from a file, loading data that was
-dumped using gardump and then massaged with your favorite text editor.
+dumped using gardump.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -38,17 +38,34 @@ Write status messages to stderr.
 .It 3
 Write Garmin application protocol status to stderr.
 .It 4
-Perform a hex dump of all data going in and out of the Garmin
-layer 2 protocol machine.  Data is written to stdout.
+Perform a dump of all data going in and out of the Garmin
+layer 2 protocol machine.  Data sent to the
+.Tn GPS
+is prefixed by the symbol
+.Li } .
+Data received from the
+.Tn GPS
+is prefixed by the symbol
+.Li { .
+Data is written to stderr.
 .It 5
-Perform a hex dump of all data read from/written to the GPS
-unit.
+Perform a dump of all data read from/written to the GPS unit.
+Data sent to the
+.Tn GPS
+is prefixed by the symbol
+.Li > .
+Data received from the
+.Tn GPS
+is prefixed by the symbol
+.Li < .
+Data is written to stderr.
 .El
 .It Fl p Ar port
 Use
 .Ar port
 as the device connected to the GPS unit.  The default port is a
-compile time option.
+compile time option that is typically set to
+.Pa /dev/tty00 .
 .El
 .Pp
 .Nm
@@ -63,32 +80,13 @@ acted upon are:
 .Bl -tag -width Ds
 .It [waypoints, n records]
 Begin upload of waypoints.  The number of records is ignored.
-Waypoints use this format:
-.Bd -literal -offset indent
-xxxxxx -99.99999 -999.99999 sssss/d comments
-
-.Ed
-where the fields are waypoint name, latitude, longitude, symbol type,
-symbol display option, and comments.  Comments can be up to 40 characters.
 .It [routes, n records]
 Begin upload of routes.  The number of records is ignored.  Routes are
-composed of a route header followed by route waypoints.  A route header
-looks like:
-.Bd -literal -offset indent
-**n comment
-
-.Ed
-where `n' is the route number.  Route waypoints are identical to normal
-waypoints and are described above.
+composed of a route header followed by route waypoints.
 .It [tracks, n records]
-Begin upload of a track log.  A track log entry looks like:
-.Bd -literal -offset indent
--99.999999 -999.999999 yymmddhhmmss start
-
-.Ed
-The start field is optional.  Also, the time/date field is ignored
-on upload.  It may read ``unknown'' if the dump was of a compressed
-track log or of a previous uploaded track log.
+Begin upload of a track log.  The number of records is ignored.
+The time/date field in track log entries, if present, is ignored
+on upload.
 .It [end transfer, n/m records]
 Terminate any existing upload.
 .El
@@ -99,6 +97,10 @@ the next transfer is started.
 will ignore any line where the first non-blank character is ``#''. This
 allows comments to be added to files that will be processed by
 .Nm garload .
+A brief description of the record format for waypoints, routes, and tracks
+is output by
+.Xr gardump 1
+in the form of a comment as part of each download.
 .\".SH ENVIRONMENT
 .\".SH FILES
 .\".SH EXAMPLES
@@ -108,9 +110,9 @@ allows comments to be added to files that will be processed by
 .\".Sh HISTORY
 .Sh AUTHORS
 Marco S. Hyman using information from the published GARMIN GPS Interface
-Specification, dated May 6, 1998 and the note OBSERVATIONS OF THE
+Specification, dated December 6, 1999 and the note OBSERVATIONS OF THE
 GARMIN-GARMIN PROTOCOL by william.soley@sun.com and werme@zk3.dec.com.
 .Sh BUGS
-Tested with a Garmin GPS III and GPS III+ using OpenBSD versions
-2.3 through 2.9 running on SPARC and i386.  May not work with other
+Tested with a Garmin GPS III+ and GPS V using OpenBSD versions
+2.3 through 3.3 running on SPARC and i386.  May not work with other
 GPS units or operating systems
