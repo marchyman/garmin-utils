@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.12 2003/04/12 01:27:09 marc Exp $
+ *	$snafu: gpsformat.c,v 1.13 2003/04/12 22:40:11 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -40,42 +40,37 @@ scan_state(u_char *buf)
 	return state;
 }
 
-/*
- * Build a list entry that contains the given data buffer.
- */
-static struct gps_list_entry *
-build_list_entry(u_char *data, int data_len)
+static u_char *
+gps_buffer_new(void)
 {
-	struct gps_list_entry *entry = malloc(sizeof(struct gps_list_entry));
-	assert(entry != NULL);
+	u_char *data;
 
-	entry->next = 0;
-	entry->data = data;
-	entry->data_len = data_len;
-	return entry;
+	data = malloc(GPS_FRAME_MAX);
+	assert(data != NULL);
+	return data;
 }
 
-
 /*
- * decode the buffer as a waypoint and format according to the required
- * waypoint type.
+ * convert the given double to a garmin `semicircle' and stuff
+ * it in to b (assumed to be at least 4 characters wide) in
+ * the garmin (little endian) order.
  */
-static struct gps_list_entry *
-waypoints(gps_handle gps, u_char *buf, int state)
+static void
+double2semicircle(double f, u_char *b)
 {
-	u_char *data = 0;
-
-	;;;
-	return build_list_entry(data, 0);
+	long work = f * 0x80000000 / 180.0;
+	b[0] = (u_char) work;
+	b[1] = (u_char) (work >> 8);
+	b[2] = (u_char) (work >> 16);
+	b[3] = (u_char) (work >> 24);
 }
-
-#if 0
 
 /*
  * Append data to a buffer. The rules are:
  *	1) data inserted is upper case
- *	2) If data len less than buffer len null terminate.
- *	3) pad remainder of buffer with spaces
+ *	2) newline is converted to null
+ *	3) If data len less than buffer len null terminate.
+ *	4) pad remainder of buffer with spaces
  * Returns pointer to buffer after data has been added.
  */
 static u_char *
@@ -98,20 +93,460 @@ add_string(u_char *buf, u_char *data, int len)
 	return buf;
 }
 
+
 /*
- * convert the given double to a garmin `semicircle' and stuff
- * it in to b (assumed to be at least 4 characters wide) in
- * the garmin (little endian) order.
+ * Build a list entry that contains the given data buffer.
  */
-static void
-double2semicircle(double f, u_char *b)
+static struct gps_list_entry *
+build_list_entry(u_char *data, int data_len)
 {
-	long work = f * 0x80000000 / 180.0;
-	b[ 0 ] = (u_char) work;
-	b[ 1 ] = (u_char) ( work >> 8 );
-	b[ 2 ] = (u_char) ( work >> 16 );
-	b[ 3 ] = (u_char) ( work >> 24 );
+	struct gps_list_entry *entry = malloc(sizeof(struct gps_list_entry));
+	assert(entry != NULL);
+
+	entry->next = 0;
+	entry->data = data;
+	entry->data_len = data_len;
+	return entry;
 }
+
+/*
+ * build the data common to most waypoints, returning a pointer to
+ * the data buffer and an updated lenght
+ */
+static u_char *
+wpt_common(int *datalen, int state, char *name, double lat, double lon,
+	   char *cmnt)
+{
+	u_char *data;
+	int len;
+	int ix;
+
+	data = gps_buffer_new();
+	len = 0;
+
+	/* byte 0: data_type */
+	data[len++] = state == WAYPOINTS ? p_wpt_data : p_rte_wpt_data;
+
+	/* byte 1-6: waypoint name */
+	for (ix = 0; ix < 6; ix += 1) {
+		data[len++] = toupper(name[ix]);
+	}
+
+	/* byte 7-10: latitude */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 11-14: longitute */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 15-18: zero */
+	data[len++] = 0;
+	data[len++] = 0;
+	data[len++] = 0;
+	data[len++] = 0;
+
+	/* byte 19-58: comment */
+	add_string(&data[len], cmnt, 40);
+	len += 40;
+
+	*datalen = len;
+	return data;
+}
+
+static struct gps_list_entry *
+d100_wpt(int state, char *name, double lat, double lon, char *cmnt)
+{
+	u_char *data;
+	int len;
+
+	data = wpt_common(&len, state, name, lat, lon, cmnt);
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d101_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym)
+{
+	u_char *data;
+	int len;
+
+	data = wpt_common(&len, state, name, lat, lon, cmnt);
+
+	/* byte 59-62: proximity (float) -- set to zero */
+	data[len++] = 0;
+	data[len++] = 0;
+	data[len++] = 0;
+	data[len++] = 0;
+	
+	/* byte 63: symbol */
+	data[len++] = (u_char) sym;
+
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d102_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym)
+{
+	u_char *data;
+	int len;
+
+	data = wpt_common(&len, state, name, lat, lon, cmnt);
+
+	/* byte 59-62: proximity (float) -- set to zero */
+	data[len++] = 0;
+	data[len++] = 0;
+	data[len++] = 0;
+	data[len++] = 0;
+	
+	/* byte 63-64: symbol */
+	data[len++] = (u_char) sym;
+	data[len++] = (u_char) (sym >> 8);
+
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d103_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
+	 int disp)
+{
+	u_char *data;
+	int len;
+
+	data = wpt_common(&len, state, name, lat, lon, cmnt);
+
+	/* byte 59: symbol */
+	data[len++] = (u_char) sym;
+
+	/* byte 60: display */
+	data[len++] = (u_char) disp;
+
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d104_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
+	 int disp)
+{
+	u_char *data;
+	int len;
+
+	data = wpt_common(&len, state, name, lat, lon, cmnt);
+
+	/* byte 59-60: symbol */
+	data[len++] = (u_char) sym;
+	data[len++] = (u_char) (sym >> 8);
+
+	/* byte 61: display */
+	data[len++] = (u_char) disp;
+
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d105_wpt(int state, double lat, double lon, char *cmnt, int sym)
+{
+	u_char *data;
+	int len;
+
+	data = gps_buffer_new();
+	len = 0;
+
+	/* byte 0: data_type */
+	data[len++] = state == WAYPOINTS ? p_wpt_data : p_rte_wpt_data;
+
+	/* byte 1-4: latitude */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 5-8: longitude */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 9-10: symbol */
+	data[len++] = (u_char) sym;
+	data[len++] = (u_char) (sym >> 8);
+
+	/* byte 11-50: ident (saved as comment by print code) */
+	add_string(&data[len], cmnt, 40);
+	len += 40;
+
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d106_wpt(int state, double lat, double lon, char *cmnt, int sym)
+{
+	u_char *data;
+	int len;
+
+	data = gps_buffer_new();
+	len = 0;
+
+	/* byte 0: data type */
+	data[len++] = state == WAYPOINTS ? p_wpt_data : p_rte_wpt_data;
+
+	/* byte 1-14: class/subclass.  0 == user waypoint */
+	memset(&data[len], 0, 14);
+	len += 14;
+
+	/* byte 15-18: latitude */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 19-22: longitude */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 23-24: symbol */
+	data[len++] = (u_char) sym;
+	data[len++] = (u_char) (sym >> 8);
+
+	/* byte 25-64: ident (saved as comment by print code) */
+	add_string(&data[len], cmnt, 40);
+	len += 40;
+
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d107_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
+	 int disp)
+{
+	u_char *data;
+	int len;
+
+	data = wpt_common(&len, state, name, lat, lon, cmnt);
+
+	/* byte 59: symbol */
+	data[len++] = (u_char) sym;
+
+	/* byte 60: display */
+	data[len++] = (u_char) disp;
+
+	/* byte 61-64: proximity */
+	data[len++] = 0;
+	data[len++] = 0;
+	data[len++] = 0;
+	data[len++] = 0;
+
+	/* byte 65: color (0 == default) */
+	data[len++] = 0;
+
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d108_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
+{
+	u_char *data;
+	int len;
+	int tlen;
+
+	data = gps_buffer_new();
+	len = 0;
+
+	/* byte 0: data type */
+	data[len++] = state == WAYPOINTS ? p_wpt_data : p_rte_wpt_data;
+
+	/* byte 1: waypoint class (0 == user) */
+	data[len++] = 0;
+
+	/* byte 2: waypoint color (0xff == default) */
+	data[len++] = (u_char) 0xff;
+
+	/* byte 3: display */
+	data[len++] = (u_char) disp;
+
+	/* byte 4: attributes (0x60 per garmin doc) */
+	data[len++] = (u_char) 0x60;
+
+	/* byte 5-6: symbol */
+	data[len++] = (u_char) sym;
+	data[len++] = (u_char) (sym >> 8);
+	
+	/* byte 7-24: subclass (value per garmin doc) */
+	memset(&data[len], 0, 6);
+	len += 6;
+	memset(&data[len], 0xff, 12);
+	len += 12;
+
+	/* byte 25-28: latitude */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 29-32: longitude */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 33-44: alt, depth, and proximity (uploaded as zero) */
+	memset(&data[len], 0, 12);
+	len += 12;
+
+	/* byte 45-48: state and country codes: set to the empty string */
+	data[len++] = ' ';
+	data[len++] = ' ';
+	data[len++] = ' ';
+	data[len++] = ' ';
+
+	/* byte 49-99: ident (max 51 characters) */
+	tlen = strlcpy(&data[len], cmnt, 51);
+	if (++tlen > 51)
+		tlen = 51;
+	len += tlen;
+
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d109_wpt(int state, double lat, double lon, char *cmnt, int sym, int disp)
+{
+	u_char *data;
+	int len;
+	int tlen;
+
+	data = gps_buffer_new();
+	len = 0;
+
+	/* byte 0: data type */
+	data[len++] = state == WAYPOINTS ? p_wpt_data : p_rte_wpt_data;
+
+	/* byte 1: data packet type (1 from the garmin doc) */
+	data[len++] = 1;
+
+	/* byte 2: waypoint class */
+	data[len++] = 0;
+
+	/* byte 3: display and color */
+	data[len++] = (disp << 5) & 0x60;
+
+	/* byte 4: attributes (0x70 per garmin doc) */
+	data[len++] = (u_char) 0x70;
+
+	/* byte 5-6: symbol */
+	data[len++] = (u_char) sym;
+	data[len++] = (u_char) (sym >> 8);
+	
+	/* byte 7-24: subclass (assumes value same as D108) */
+	memset(&data[len], 0, 6);
+	len += 6;
+	memset(&data[len], 0xff, 12);
+	len += 12;
+
+	/* byte 25-28: latitude */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 29-32: longitude */
+	double2semicircle(lat, &data[len]);
+	len += 4;
+
+	/* byte 33-44: alt, depth, and proximity (uploaded as zero) */
+	memset(&data[len], 0, 12);
+	len += 12;
+
+	/* byte 45-48: state and country codes: set to the empty string */
+	data[len++] = ' ';
+	data[len++] = ' ';
+	data[len++] = ' ';
+	data[len++] = ' ';
+
+	/* byte 49-52: link ete, default = 0xffffffff */
+	data[len++] = (u_char) 0xff;
+	data[len++] = (u_char) 0xff;
+	data[len++] = (u_char) 0xff;
+	data[len++] = (u_char) 0xff;
+
+	/* byte 53-103: ident (max 51 characters) */
+	tlen = strlcpy(&data[len], cmnt, 51);
+	if (++tlen > 51)
+		tlen = 51;
+	len += tlen;
+
+	return build_list_entry(data, len);
+}
+
+/*
+ * decode the buffer as a waypoint and format according to the required
+ * waypoint type.   Data is expected to be in this format
+ *
+ *	name lat long sym/disp comments
+ */
+static struct gps_list_entry *
+waypoints(gps_handle gps, u_char *buf, int state)
+{
+	struct gps_list_entry *entry = 0;
+	int result;
+	char name[8];		/* waypoint name */
+	double lat;		/* latitude */
+	double lon;		/* longitude */
+	int sym;		/* symbol */
+	int disp;		/* symbol display mode */
+	char comment[44];	/* comment */
+	int wpt;
+
+	/* break the input data up into its component fields */
+	result = sscanf(buf, "%6c %lf %lf %d/%d %40c",
+			name, &lat, &lon, &sym, &disp, comment);
+	if (result != 6) {
+		gps_printf(gps, 1, __func__ ": bad format: %s\n", buf);
+		return 0;
+	}
+	name[6] = 0;
+	comment[40] = 0;
+
+	/* Now figure out which waypoint format is being used and
+	   call the appropriate routine */
+
+	switch (state) {
+	case WAYPOINTS:
+		wpt = gps_get_wpt_type(gps);
+		break;
+	case ROUTES:
+		wpt = gps_get_rte_wpt_type(gps);
+		break;
+	default:
+		wpt = 0;
+	}
+	switch (wpt) {
+	case D100:
+		entry = d100_wpt(state, name, lat, lon, comment);
+		break;
+	case D101:
+		entry = d101_wpt(state, name, lat, lon, comment, sym);
+		break;
+	case D102:
+		entry = d102_wpt(state, name, lat, lon, comment, sym);
+		break;
+	case D103:
+		entry = d103_wpt(state, name, lat, lon, comment, sym, disp);
+		break;
+	case D104:
+		entry = d104_wpt(state, name, lat, lon, comment, sym, disp);
+		break;
+	case D105:
+		entry = d105_wpt(state, lat, lon, comment, sym);
+		break;
+	case D106:
+		entry = d106_wpt(state, lat, lon, comment, sym);
+		break;
+	case D107:
+		entry = d107_wpt(state, name, lat, lon, comment, sym, disp);
+		break;
+	case D108:
+		entry = d108_wpt(state, lat, lon, comment, sym, disp);
+		break;
+	case D109:
+		entry = d109_wpt(state, lat, lon, comment, sym, disp);
+		break;
+	default:
+		gps_printf(gps, 1, "unknown waypoint type %d\n", wpt);
+		break;
+	}
+
+	return entry;
+}
+
+#if 0
 
 static GpsListEntry *
 scanRoute( GpsHandle gps, u_char * buf )
@@ -148,105 +583,6 @@ scanRoute( GpsHandle gps, u_char * buf )
     /* byte 2-22: route comment */
     addString( &data[ len ], comment, 20 );
     len += 20;
-
-    return buildListEntry( data, len );
-}
-
-    /*
-     * Look for waypoints and/or route headers.  If found and in a
-     * valid format build a gps packet and return it in a GpsListEntry.
-     * Return 0 if a packet could not be created.
-     */
-static GpsListEntry *
-scanWaypoint( GpsHandle gps, u_char * buf, FormatState state )
-{
-    char name[ 8 ];		/* waypoint name */
-    double lat;			/* latitude */
-    double lon;			/* longitude */
-    int sym;			/* symbol */
-    int disp;			/* symbol display mode */
-    char comment[ 44 ];		/* comment */
-    int result;			/* input scan results */
-    u_char * data;	/* gps data buffer */
-    int len;			/* gps data len */
-    int ix;			/* general use index */
-    int wptType;
-    
-    /* break the input data up into its component fields */
-    result = sscanf( buf, "%6c %lf %lf %d/%d %40c",
-		    name, &lat, &lon, &sym, &disp, comment );
-    if ( result!= 6 ) {
-	if ( gpsDebug( gps ) ) {
-	    warnx( "bad waypoint: %s", buf );
-	}
-	return 0;
-    }
-    name[ 6 ] = 0;
-    comment[ 40 ] = 0;
-
-    if ( gpsDebug( gps ) > 1 ) {
-	warnx( "waypoint %s", name );
-    }
-
-    wptType = gpsGetWptType (gps);
-    
-    /* byte 1: waypoint type */
-    data = malloc( GPS_FRAME_MAX );
-    assert( data );
-    len = 0;
-    if ( state == ROUTES ) {
-	data[ len++ ] = rteWptData;
-    } else {
-	data[ len++ ] = wptData;
-    }
-
-    /* bytes 2-7: waypoint name */
-    for ( ix = 0; ix < 6; ix += 1 ) {
-	data[ len++ ] = toupper( name[ ix ] );
-    }
-
-    /* bytes 8-11: latitude */
-    doubleToSemicircle( lat, &data[ len ] );
-    len += 4;
-
-    /* bytes 12-15: longitude */
-    doubleToSemicircle( lon, &data[ len ] );
-    len += 4;
-
-    /* bytes 16-19: zero */
-    data[ len++ ] = 0;
-    data[ len++ ] = 0;
-    data[ len++ ] = 0;
-    data[ len++ ] = 0;
-
-    /* bytes 20-59: comments */
-    addString( &data[ len ], comment, 40 );
-    len += 40;
-
-    if (wptType == D100) {
-        /* do nothing */
-    } else if (wptType == D103) {
-        /* byte 60: symbol */
-        data[ len++ ] = (u_char) sym;
-
-        /* byte 61: display option */
-        data[ len++ ] = (u_char) disp;
-    } else if (wptType == D104) {
-        /* bytes 60-63: distance (uploaded as zero) */
-        data[ len++ ] = 0;
-        data[ len++ ] = 0;
-        data[ len++ ] = 0;
-        data[ len++ ] = 0;
-
-        /* bytes 64-65: symbol */
-        data[ len++ ] = (u_char) sym;
-        data[ len++ ] = (u_char) (sym >> 8);
-
-        /* byte 66: display option */
-        data[ len++ ] = (u_char) disp;
-    } else {
-        errx (1, "unsupported device");
-    }
 
     return buildListEntry( data, len );
 }
