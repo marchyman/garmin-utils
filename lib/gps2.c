@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps2.c,v 1.4 2001/12/16 00:56:16 marc Exp $
+ *	$snafu: gps2.c,v 1.5 2003/04/10 18:58:26 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -11,9 +11,7 @@
 #include <stdlib.h>
 #include <err.h>
 
-#include "gpsproto.h"
-#include "gps1.h"
-#include "gps2.h"
+#include "gpslib.h"
 #include "gpsdisplay.h"
 
     /*

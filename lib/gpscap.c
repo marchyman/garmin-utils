@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpscap.c,v 1.5 2001/12/16 00:56:16 marc Exp $
+ *	$snafu: gpscap.c,v 1.6 2003/04/10 18:58:27 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -38,22 +38,39 @@ gpsProtocolCap( GpsHandle gps )
 	    goto done;
 	  case 1:
 	    if ( data[ 0 ] == protoCap ) {
+		int phys = -1, link = -1, app = -1, dat = -1, found = 0;
+
                 for (pntr = 1; pntr + 5 < dataLen; pntr += 3) {
                     tag = data [pntr];
                     val = data [pntr + 1] + (data [pntr + 2] << 8);
-                    if (tag == 'A' && val == A100) {
-                        pntr += 3;
-                        tag = data [pntr];
-                        val = data [pntr + 1] + (data [pntr + 2] << 8);
-                        if (tag == 'D') {
-                            gpsSetWptType (gps, val);
-                            if (gpsDebug (gps) > 1) {
-                                warnx ("waypoint packet type is %d", val);
-                            };
-                            break;
-                        };
-                    };
-                };
+		    switch (tag) {
+		    case 'P':
+			phys = val;
+			link = app = dat = -1;
+			break;
+		    case 'L':
+			link = val;
+			app = dat = -1;
+			break;
+		    case 'A':
+			app = val;
+			dat = -1;
+			break;
+		    case 'D':
+			gpsSetCapability(gps, phys, link, app, ++dat, val);
+			break;
+		    default:
+			warnx ("unknown capability tag %d\n", tag);
+			break;
+		    }
+		    if (app == 100 && tag == 'D' && dat == 0 && !found) {
+                        gpsSetWptType (gps, val);
+			found = 1;
+                        if (gpsDebug (gps) > 1) {
+			    warnx ("waypoint packet type is %d", val);
+                        }
+		    }
+                }
 		gpsSendAck( gps, *data );
 		free( data );
 		if ( gpsDebug( gps ) > 2 ) {

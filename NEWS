@@ -1,7 +1,14 @@
 List of changes/additions (for 1.8)
 
+- code shuffle.   Several things were moved around.
+
+- code style change.   The code is now closer to OpenBSD KNF in style.
+
 - code to recognize eTrex waypoint and track headers from
   jason@thought.net (Jason L. Wright)
+
+- You can now run garmin utils on your VAX (if it's running *BSD)
+  also from jason@thought.net
 
 List of changes/additions (for 1.7)
 

@@ -1,7 +1,8 @@
-$snafu: README,v 1.8 2001/12/16 00:56:15 marc Exp $
+$snafu: README,v 1.9 2003/04/10 18:58:26 marc Exp $
 
 GARMIN upload/download utilities for the Garmin GPS 12, 12XL, 48, III, and
-III+ units.  These compile/work on OpenBSD and Linux.  They may compile/work
+III+ units.  The utilities are reported to work with the eTrex, too.  These
+utilities compile/work on OpenBSD and Linux.  They may compile/work
 on other *BSD based systems.  All original code is placed in the Public Domain
 by its author, Marco S Hyman.
 

@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsprint.c,v 1.11 2002/09/10 00:18:43 marc Exp $
+ *	$snafu: gpsprint.c,v 1.12 2003/04/10 18:58:27 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -10,6 +10,7 @@
 #include <time.h>
 #include <err.h>
 #include <string.h>
+#include <machine/endian.h>
 
 #include "gpsproto.h"
 #include "gps1.h"
@@ -33,6 +34,96 @@ semicircleToDouble( const unsigned char * s )
     return work * 180.0 / (double) (0x80000000);
 }
 
+
+#if defined(__vax__)
+
+/*
+ * convert the IEEE754 single precision little endian stream to a
+ * VAX F floating point data type.
+ */
+static float
+get_float( const unsigned char * s )
+{
+	float ret;
+	u_int8_t buf[4], p[4];
+	int sign, exp, mant;
+
+	/* flip to IEEE754 single precision big endian */
+	p[0] = s[3];
+	p[1] = s[2];
+	p[2] = s[1];
+	p[3] = s[0];
+
+	sign = p[0] & 0x80;
+	exp = ((p[0] & 0x7f) << 1) | ((p[1] & 0x80) >> 7);
+	memset(buf, '\0', sizeof(buf));
+
+	mant = p[1] & 0x7f;
+	mant <<= 8;
+	mant |= p[2] & 0xff;
+	mant <<= 8;
+	mant |= p[3] & 0xff;
+
+	if (exp == 0) {
+		if (mant == 0) {
+			/* true zero */
+			goto out;
+		} else {
+			/* subnormal, fail */
+			buf[1] = 0x80;
+			goto out;
+		}
+	}
+
+	if (exp == 255) {
+		/* +/- infinity or signaling/quiet NaN, fail */
+		buf[1] = 0x80;
+		goto out;
+	}
+
+	/* Ok, everything else is "normal" */
+
+	exp = exp - 127 + 129;
+	buf[0] = ((exp & 1) << 7) | ((mant >> 16) & 0x7f);
+	buf[1] = (exp >> 1) | (sign ? 0x80 : 0);
+	buf[2] = (mant >> 0) & 0xff;
+	buf[3] = (mant >> 8) & 0xff;
+
+out:
+	memcpy(&ret, buf, sizeof(ret));
+	return (ret);
+}
+
+#elif BYTE_ORDER == LITTLE_ENDIAN
+
+static float
+get_float( const unsigned char * s )
+{
+	float f;
+
+	memcpy(&f, s, sizeof(f));
+	return (f);
+}
+
+#elif BYTE_ORDER == BIG_ENDIAN
+
+static float
+get_float( const unsigned char * s )
+{
+	float f;
+	unsigned char t[4];
+
+	t[0] = s[3];
+	t[1] = s[2];
+	t[2] = s[1];
+	t[3] = s[0];
+	memcpy(&f, t, sizeof(f));
+	return (f);
+}
+
+#else
+# error "unknown float conversion"
+#endif
 
     /*
      * D100 waypoint format is:
@@ -113,14 +204,14 @@ printWaypoint( const unsigned char * wpt, int len, int wptType )
 	/* incomplete code from Stefan Cermak <cermak@emt.tugraz.at>
 	   for the etrex */
     } else if (wptType == D108) {
-	unsigned char offset_comment;
-	double lat = semicircleToDouble( &wpt[ 25 ] );
-	double lon = semicircleToDouble( &wpt[ 29 ] );
-	sym= wpt[5];
-	disp= wpt[3];
-	offset_comment=49+strlen(&wpt[49])+1;
-	printf( "%s %10f %11f %d/%d %s\n", &wpt[49], lat, lon, sym,
-		    disp, &wpt[offset_comment] );
+ 	unsigned char offset_comment;
+ 	double lat = semicircleToDouble( &wpt[ 25 ] );
+ 	double lon = semicircleToDouble( &wpt[ 29 ] );
+ 	sym= wpt[5];
+ 	disp= wpt[3];
+ 	offset_comment=49+strlen(&wpt[49])+1;
+ 	printf( "%s %10f %11f %d/%d %s\n", &wpt[49], lat, lon, sym,
+  		    disp, &wpt[offset_comment] );
     } else {
         warnx ("unknown waypoint packet type: %d", wptType);
     }
@@ -136,17 +227,62 @@ printWaypoint( const unsigned char * wpt, int len, int wptType )
      * route=999 optional comments
      */
 static void
-printRteHdr( const unsigned char * hdr, int len )
+printRteHdr( const unsigned char * hdr, int len, int type )
 {
     unsigned char comment[ 24 ];
 
-    if ( len > 2 ) {
+    switch (type) {
+    case D200:
+	printf( "**%d\n", hdr[1] );
+	break;
+    case D201:
 	memcpy( comment, &hdr[ 2 ], 20 );
 	comment[ 20 ] = 0;
-    } else {
-	comment[ 0 ] = 0;
+	printf( "**%d %s\n", hdr[ 1 ], comment );
+	break;
+    case D202:
+	printf( "**%s\n", &hdr[ 1 ] );
+	break;
+    default:
+	printf( "unknown rte hdr: D%03d\n", type );
     }
-    printf( "**%d %s\n", hdr[ 1 ], comment );
+}
+
+static void
+printRteLink( const unsigned char *lnk, int len )
+{
+	const char *linktype = NULL;
+
+	switch (lnk[1] | (lnk[2] << 8)) {
+	case 0:
+		linktype = "line";
+		break;
+	case 1:
+		linktype = "link";
+		break;
+	case 2:
+		linktype = "net";
+		break;
+	case 3:
+		linktype = "direct";
+		break;
+	case 0xff:
+		linktype = "snap";
+		break;
+	default:
+		linktype = NULL;
+		break;
+	}
+
+	printf(" link");
+	if (linktype == NULL)
+		printf(" 0x%x",  lnk[1] | (lnk[2] << 8));
+	else
+		printf(" %s", linktype);
+
+	if (lnk[21] != '\0')
+		printf(" %s", &lnk[21]);
+	printf("\n");
 }
 
     /*
@@ -162,24 +298,44 @@ printRteHdr( const unsigned char * hdr, int len )
      *
      */
 static void
-printTrack( const unsigned char * trk, int len )
+printTrack( const unsigned char * trk, int len, int type )
 {
-    double lat = semicircleToDouble( &trk[ 1 ] );
-    double lon = semicircleToDouble( &trk[ 5 ] );
-    time_t time = UNIX_TIME_OFFSET + trk[ 9 ] + ( trk[ 10 ] << 8 ) +
-		  ( trk[ 11 ] << 16 ) + ( trk[ 12 ] << 24 );
-    const char * startstring = trk[ 13 ] ? " start" : "";
+    double lat, lon, alt, dpth;
+    time_t time;
+    const char * startstring;
     char timestring[ 32 ];
 
-    if ( time > 0 ) {
-	struct tm * gmt = gmtime( &time );
-	snprintf( timestring, 32, "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d",
+    switch (type) {
+    case D300:
+	lat = semicircleToDouble( &trk[ 1 ] );
+	lon = semicircleToDouble( &trk[ 5 ] );
+	time = UNIX_TIME_OFFSET + trk[ 9 ] + ( trk[ 10 ] << 8 ) +
+		  ( trk[ 11 ] << 16 ) + ( trk[ 12 ] << 24 );
+	startstring = trk[ 13 ] ? " start" : "";
+	printf( "%10f %11f %s%s\n", lat, lon, timestring, startstring );
+	break;
+    case D301:
+	lat = semicircleToDouble( &trk[ 1 ] );
+	lon = semicircleToDouble( &trk[ 5 ] );
+	time = UNIX_TIME_OFFSET + trk[ 9 ] + ( trk[ 10 ] << 8 ) +
+		  ( trk[ 11 ] << 16 ) + ( trk[ 12 ] << 24 );
+	alt = get_float( &trk[ 13 ] );
+	dpth = get_float( &trk[ 17 ] );
+	startstring = trk[ 21 ] ? " start" : "";
+	if ( time > 0 ) {
+	    struct tm * gmt = gmtime( &time );
+	    snprintf( timestring, 32, "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d",
 		 gmt->tm_year + 1900, gmt->tm_mon + 1, gmt->tm_mday,
 		 gmt->tm_hour, gmt->tm_min, gmt->tm_sec );
-    } else {
-	strcpy( timestring, "unknown" );
+	} else {
+	    strcpy( timestring, "unknown" );
+	}
+	printf( "%10f %11f %f %f %s%s\n", lat, lon, alt, dpth,
+	    timestring, startstring );
+	break;
+    default:
+	printf( "[unknown trk point type %d\n", type );
     }
-    printf( "%10f %11f %s%s\n", lat, lon, timestring, startstring );
 }
 
 static void
@@ -234,13 +390,16 @@ gpsPrint( GpsHandle gps, GpsCmdId cmd, const unsigned char * packet, int len )
 	    printf( "[%s, %d records]\n", type, limit );
 	    break;
 	  case rteHdr:
-	    printRteHdr( packet, len );
+	    printRteHdr( packet, len, gpsGetRteRteHdr( gps ) );
 	    break;
 	  case rteWptData:
 	    printWaypoint( packet, len, gpsGetWptType( gps ) );
 	    break;
+	  case rteLink:
+	    printRteLink( packet, len );
+	    break;
 	  case trkData:
-	    printTrack( packet, len );
+	    printTrack( packet, len, gpsGetTrkTrkType(gps) );
 	    break;
 	  case wptData:
 	    printWaypoint( packet, len, gpsGetWptType( gps ) );
