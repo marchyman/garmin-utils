@@ -4,7 +4,7 @@ Mon Jun 25 12:35:42 2001  Marco S Hyman  <marc@snafu.org>
 
 	* NEWS: Note changes.
 
-	* GNUmakefile.inc: remove -O3.  pdate version to 1.6.
+	* GNUmakefile.inc: remove -O3.  Update version to 1.6.
 
 	* Makefile.inc: remove -O3.  Update version to 1.6. Add options
 	to CFLAGS instead of COPTS (needed by FreeBSD?).

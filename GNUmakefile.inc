@@ -1,4 +1,4 @@
-# $snafu: GNUmakefile.inc,v 1.4 2001/06/25 02:43:22 marc Exp $
+# $snafu: GNUmakefile.inc,v 1.5 2001/06/25 19:41:46 marc Exp $
 #
 # Default installation directories
 #
@@ -18,10 +18,9 @@ CFLAGS+=	-DSIO_TYPE=Linux
 
 # Program version
 #
-CFLAGS+=	-DVERSION=\"1.5\"
+CFLAGS+=	-DVERSION=\"1.6\"
 
 # Other C flags
 #
 CFLAGS+= -I../lib
 CFLAGS+= -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Werror
-CFLAGS+= -O3

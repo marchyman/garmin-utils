@@ -1,5 +1,5 @@
 /*
- *	$snafu: gps1.c,v 1.8 2001/06/19 04:36:47 marc Exp $
+ *	$snafu: gps1.c,v 1.9 2001/06/25 19:41:46 marc Exp $
  *
  *	Copyright (c) 1998 Marco S. Hyman
  *
@@ -32,6 +32,13 @@
 #include "gpsproto.h"
 #include "gps1.h"
 #include "gpsdisplay.h"
+
+    /*
+     * Define the various serial I/O types
+     */
+#define BSD	0
+#define Linux	1
+
 
     /*
      * This program is designed to talk to a single gps unit.  Thus,

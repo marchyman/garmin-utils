@@ -1,3 +1,9 @@
+List of changes/additions (for 1.6).  See ChangeLog for more details.
+
+- Fix Linux/BSD generation bug.
+
+- Pass make options in a way compatible to all the *BSD variants.
+
 List of changes/additions (for 1.5).  See ChangeLog for more details.
 
 - bug (in fact, two of them) in lib/gpsload.c was fixed

@@ -1,4 +1,4 @@
-# $snafu: Makefile.inc,v 1.8 2001/06/25 02:43:22 marc Exp $
+# $snafu: Makefile.inc,v 1.9 2001/06/25 19:41:46 marc Exp $
 #
 # Default installation directories
 #
@@ -22,9 +22,9 @@ SIO_TYPE?=	-DSIO_TYPE=BSD
 
 # C options
 #
-COPTS+= -g -I${.CURDIR}/../lib -O3
-COPTS+= -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Werror
-COPTS+= ${SERIAL_PORT} ${VERSION} ${SIO_TYPE}
+CFLAGS+= -g -I${.CURDIR}/../lib
+CFLAGS+= -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -Werror
+CFLAGS+= ${SERIAL_PORT} ${VERSION} ${SIO_TYPE}
 
 # Figure out where the library lives for proper dependencies
 #
