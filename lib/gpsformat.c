@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.22 2003/04/23 23:07:44 marc Exp $
+ *	$snafu: gpsformat.c,v 1.23 2003/04/24 04:18:14 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -524,14 +524,13 @@ d109_wpt(int state, char *name, double lat, double lon, char *cmnt, int sym,
  *  lat long [A:altitude] [S:symbol] [D:display] [I:ident] [C:comment] [L:link]
  */
 static struct gps_list_entry *
-waypoints(gps_handle gps, u_char *buf, int state)
+waypoints(gps_handle gps, u_char *buf, int state, int *link)
 {
 	struct gps_list_entry *entry = 0;
 	double lat;			/* latitude */
 	double lon;			/* longitude */
 	int sym;			/* symbol */
 	int disp;			/* symbol display mode */
-	int link;			/* route link code */
 	char name[GPS_STRING_MAX + 1];	/* waypoint name */
 	char cmnt[GPS_STRING_MAX + 1];	/* comment */
 
@@ -539,6 +538,10 @@ waypoints(gps_handle gps, u_char *buf, int state)
 	char *end;
 	int len;
 	int wpt;
+
+	sym = disp = *link = -1;
+	name[0] = 0;
+	cmnt[0] = 0;
 
 	/* Latitude and longitude */
 	sscanf(buf, "%lf %lf", &lat, &lon);
@@ -572,7 +575,7 @@ waypoints(gps_handle gps, u_char *buf, int state)
 			break;
 		case 'L':
 			/* route link code */
-			sscanf(&beg[1], "%d", &link);
+			sscanf(&beg[1], "%d", link);
 			break;
 		default:
 			gps_printf(gps, 1, __func__ ": unknown field ->%s\n",
@@ -580,6 +583,9 @@ waypoints(gps_handle gps, u_char *buf, int state)
 			continue;
 		}
 	}
+
+	gps_printf(gps, 3, "wpt %lf %lf %d %d %s %s %d\n", lat, lon,
+		   sym, disp, name, cmnt, link);
 
 	/* Now figure out which waypoint format is being used and
 	   call the appropriate routine */
@@ -628,83 +634,132 @@ waypoints(gps_handle gps, u_char *buf, int state)
 		gps_printf(gps, 1, "unknown waypoint type %d\n", wpt);
 		break;
 	}
-
 	return entry;
 }
 
+static struct gps_list_entry *
+d200_route(int num)
+{
+	u_char *data;
+	int len;
+
+	data = gps_buffer_new();
+	len = 0;
+
+	data[len++] = p_rte_hdr;
+	data[len++] = num;
+
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d201_route(int num, char *cmnt)
+{
+	u_char *data;
+	int len;
+
+	data = gps_buffer_new();
+	len = 0;
+
+	data[len++] = p_rte_hdr;
+	data[len++] = num;
+	add_string(&data[len], cmnt, 20);
+	len += 20;
+
+	return build_list_entry(data, len);
+}
+
+static struct gps_list_entry *
+d202_route(char *cmnt)
+{
+	u_char *data;
+	int len;
+	int tlen;
+
+	data = gps_buffer_new();
+	len = 0;
+
+	data[len++] = p_rte_hdr;
+	tlen = strlcpy(&data[len], cmnt, GPS_STRING_MAX);
+	if (++tlen > GPS_STRING_MAX)
+		tlen = GPS_STRING_MAX;
+	len += tlen;
+
+	return build_list_entry(data, len);
+}
+
 /*
- * decode the buffer as a route header or route link record.
- * Route waypoints are handled by the above waypoint code.   Data is
- * expected to be in this format
+ * decode the buffer as a route header.  Route waypoints are handled by the
+ * above waypoint code.   Data is expected to be in this format
  *
- *	**number name	(route header)
- *	*class ident	(route link)
+ *	**number name
  */
 static struct gps_list_entry *
 routes(gps_handle gps, u_char *buf)
 {
-	struct gps_list_entry *entry = 0;
-	int result;
-	int rte = 0;
-	int class = -1;
+	struct gps_list_entry *entry;
+	char *p;
+	int rte;
+	int num;
 	char cmnt[GPS_STRING_MAX + 1];
 
-	if (buf[1] == '*')
-		result = sscanf(buf, "**%d %51s", &rte, cmnt);
+	sscanf(buf, "**%d", &num);
+	p = strchr(buf, ' ');
+	if (p)
+		strlcpy(cmnt, p + 1, GPS_STRING_MAX);
 	else
-		result = sscanf(buf, "*%d %51s", &class, cmnt);
-	if (result != 2) {
-		gps_printf(gps, 1, __func__ ": bad format: %s\n", buf);
-		return 0;
-	}
-	cmnt[GPS_STRING_MAX] = 0;
-	gps_printf(gps, 3, "route %d %s/%s\n", rte, cmnt, class);
+		cmnt[GPS_STRING_MAX] = 0;
+	gps_printf(gps, 3, "route %d %s\n", num, cmnt);
 
-	;;;
+	rte = gps_get_rte_hdr_type(gps);
+	switch (rte) {
+	case D200:
+		entry = d200_route(num);
+		break;
+	case D201:
+		entry = d201_route(num, cmnt);
+		break;
+	case D202:
+		entry = d202_route(cmnt);
+		break;
+	default:
+		entry = NULL;
+		gps_printf(gps, 1, "unknown route hdr type %d\n", rte);
+		break;
+	}
 
 	return entry;
 }
 
-#if 0
-
-static GpsListEntry *
-scanRoute( GpsHandle gps, u_char * buf )
+static struct gps_list_entry *
+route_link(gps_handle gps, int link)
 {
-    int route;			/* route number */
-    char comment[ 24 ];		/* route comments */
-    int result;			/* input scan results */
-    u_char * data;	/* gps data buffer */
-    int len;			/* gps data len */
+	u_char *data;
+	int len;
 
-    /* break the input data up into its component fields */
-    result = sscanf( buf, "**%d %20c", &route, comment );
-    if ( result != 2 ) {
-	if ( gpsDebug( gps ) ) {
-	    warnx( "bad route header: %s", buf );
-	}
-	return 0;
-    }
-    comment[ 20 ] = 0;
+	data = gps_buffer_new();
+	len = 0;
 
-    if ( gpsDebug( gps ) > 1 ) {
-	warnx( "route %d", route );
-    }
+	data[len++] = p_rte_link;
 
-    /* byte 0: route header type */
-    data = malloc( GPS_FRAME_MAX );
-    assert( data );
-    len = 0;
-    data[ len++ ] = rteHdr;
+	/* byte 1-2: class */
+	data[len++] = (u_char) link;
+	data[len++] = (u_char) (link >> 8);
 
-    /* byte 1: route number */
-    data[ len++ ] = (u_char) route;
+	/* byte 3-20: subclass (value per garmin doc) */
+	memset(&data[len], 0, 6);
+	len += 6;
+	memset(&data[len], 0xff, 12);
+	len += 12;
 
-    /* byte 2-22: route comment */
-    addString( &data[ len ], comment, 20 );
-    len += 20;
+	/* byte 21-??: ident (empty) */
 
-    return buildListEntry( data, len );
+	data[len++] = 0;
+
+	return build_list_entry(data, len);
 }
+
+#if 0
 
     /*
      * Look for track entries.  If found and in a valid format build a gps
@@ -812,6 +867,21 @@ gps_list_new(struct gps_lists **lists, struct gps_lists **cur, int state)
 }
 
 /*
+ * Link the entry arg to the end of the list identified by the
+ * cur arg.   Bump the list count.
+ */
+static void
+gps_append_list(struct gps_lists *cur, struct gps_list_entry *entry)
+{
+	if (cur->list->head == NULL)
+		cur->list->head = entry;
+	else
+		cur->list->tail->next = entry;
+	cur->list->tail = entry;
+	cur->list->count += 1;
+}
+
+/*
  * Convert a given file, assumed to be in the same format output
  * by gpsprint, to lists of gps records ready to upload to a gps
  * unit.
@@ -828,6 +898,8 @@ gps_format(gps_handle gps, FILE *stream)
 	struct gps_list_entry *entry = 0;
 	int state = START;
 	int ix;
+	int link;
+	int rte;
 	char *p;
 
 	while (fgets(buf, sizeof buf, stream)) {
@@ -863,13 +935,23 @@ gps_format(gps_handle gps, FILE *stream)
 			}
 			continue;
 		case WAYPOINTS:
-			entry = waypoints(gps, &buf[ix], state);
+			entry = waypoints(gps, &buf[ix], state, &link);
 			break;
 		case ROUTES:
 			if (buf[ix] == '*')
 				entry = routes(gps, &buf[ix]);
-			else
-				entry = waypoints(gps, &buf[ix], state);
+			else {
+				entry = waypoints(gps, &buf[ix], state, &link);
+				if (link != -1) {
+					if (entry != NULL) {
+						gps_append_list(cur, entry);
+						entry = NULL;
+					}
+					rte = gps_get_rte_lnk_type(gps);
+					if (rte == D210)
+						entry = route_link(gps, link);
+				}
+			}
 			break;
 		case TRACKS:
 			/* ;;; entry = scanTrack( gps, &buf[ ix ] ); */
@@ -877,14 +959,8 @@ gps_format(gps_handle gps, FILE *stream)
 		}
 
 		/* If entry is not null link it into the current list */
-		if (entry != NULL) {
-			if (cur->list->head == NULL)
-				cur->list->head = entry;
-			else
-				cur->list->tail->next = entry;
-			cur->list->tail = entry;
-			cur->list->count += 1;
-		}
+		if (entry != NULL)
+			gps_append_list(cur, entry);
 	}
 	return lists;
 }

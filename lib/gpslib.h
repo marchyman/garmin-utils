@@ -1,4 +1,4 @@
-/* $snafu: gpslib.h,v 1.8 2003/04/14 20:46:09 marc Exp $ */
+/* $snafu: gpslib.h,v 1.9 2003/04/24 04:18:14 marc Exp $ */
 /* PUBLIC DOMAIN April 2003 <marc@snafu.org> */
 
 /*
@@ -12,19 +12,19 @@
 /*
  * Known GPS protocol identifiers
  */
-#define p_cmd_type	10
-#define p_xfr_end	12
-#define p_utc_data	14
-#define p_xfr_begin	27
-#define p_rte_hdr	29
-#define p_rte_wpt_data	30
-#define p_trk_data	34
-#define p_wpt_data	35
-#define p_rte_link	98
-#define p_trk_hdr	99
-#define p_cap		253
-#define p_prod_rqst	254
-#define p_prod_resp	255
+#define p_cmd_type	(u_char) 10
+#define p_xfr_end	(u_char) 12
+#define p_utc_data	(u_char) 14
+#define p_xfr_begin	(u_char) 27
+#define p_rte_hdr	(u_char) 29
+#define p_rte_wpt_data	(u_char) 30
+#define p_trk_data	(u_char) 34
+#define p_wpt_data	(u_char) 35
+#define p_rte_link	(u_char) 98
+#define p_trk_hdr	(u_char) 99
+#define p_cap		(u_char) 253
+#define p_prod_rqst	(u_char) 254
+#define p_prod_resp	(u_char) 255
 
 /*
  * Raw input buffer -- read up to this many characters at a time
