@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsdump.c,v 1.12 2003/09/27 05:50:33 marc Exp $
+ * $snafu: gpsdump.c,v 2.0 2003/10/06 19:13:52 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */

@@ -1,5 +1,5 @@
 /*
- * $snafu: gardump.c,v 1.14 2003/06/12 16:44:59 marc Exp $
+ * $snafu: gardump.c,v 2.0 2003/10/06 19:14:00 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */

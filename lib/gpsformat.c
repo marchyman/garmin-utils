@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsformat.c,v 1.28 2003/10/06 19:06:31 marc Exp $
+ * $snafu: gpsformat.c,v 2.0 2003/10/06 19:13:52 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */

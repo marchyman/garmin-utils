@@ -1,5 +1,5 @@
 /*
- * $snafu: garload.c,v 1.13 2003/06/12 16:44:59 marc Exp $
+ * $snafu: garload.c,v 2.0 2003/10/06 19:14:06 marc Exp $
  *
  * Placed in the Public Domain by 1998 Marco S. Hyman
  */

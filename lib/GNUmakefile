@@ -1,4 +1,4 @@
-# $snafu: GNUmakefile,v 1.3 2003/04/25 03:40:26 marc Exp $
+# $snafu: GNUmakefile,v 2.0 2003/10/06 19:13:52 marc Exp $
 #
 include ../GNUmakefile.inc
 

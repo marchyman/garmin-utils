@@ -1,4 +1,4 @@
-# $snafu: GNUmakefile,v 1.1 2001/05/02 00:34:52 marc Exp $
+# $snafu: GNUmakefile,v 2.0 2003/10/06 19:14:06 marc Exp $
 #
 # gardump: program to dump waypoints, routes, and tracks from a garmin
 # gps unit.
