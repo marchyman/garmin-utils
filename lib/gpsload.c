@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsload.c,v 1.12 2003/04/14 07:16:21 marc Exp $
+ *	$snafu: gpsload.c,v 1.13 2003/04/17 23:35:18 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -86,7 +86,7 @@ gps_load(gps_handle gps, struct gps_lists * lists)
 			if (end_load(gps, lists->list->type) != 1)
 				return -1;
 		}
+		lists = lists->next;
 	}
-	lists = lists->next;
 	return 1;
 }

@@ -1,5 +1,5 @@
 /*
- *	$snafu: gpsformat.c,v 1.18 2003/04/17 23:20:13 marc Exp $
+ *	$snafu: gpsformat.c,v 1.19 2003/04/17 23:35:18 marc Exp $
  *
  *	Placed in the Public Domain by Marco S. Hyman
  */
@@ -145,7 +145,7 @@ wpt_common(int *datalen, int state, char *name, double lat, double lon,
 	len += 4;
 
 	/* byte 11-14: longitute */
-	double2semicircle(lat, &data[len]);
+	double2semicircle(lon, &data[len]);
 	len += 4;
 
 	/* byte 15-18: zero */
@@ -518,10 +518,11 @@ waypoints(gps_handle gps, u_char *buf, int state)
 	int wpt;
 
 	/* break the input data up into its component fields */
-	result = sscanf(buf, "%6c %lf %lf %*f %d/%d %40c",
+	result = sscanf(buf, "%6c %lf %lf %*f %d/%d %40s",
 			name, &lat, &lon, &sym, &disp, comment);
 	if (result != 6) {
-		result = sscanf(buf, "%6c %lf %lf %d/%d %40c",
+		gps_printf(gps, 3, __func__ ": no alt format: %s\n", buf);
+		result = sscanf(buf, "%6c %lf %lf %d/%d %40s",
 				name, &lat, &lon, &sym, &disp, comment);
 		if (result != 6) {
 			gps_printf(gps, 1, __func__ ": bad format: %s\n", buf);
