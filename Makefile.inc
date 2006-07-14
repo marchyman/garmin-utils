@@ -1,9 +1,10 @@
-# $snafu: Makefile.inc,v 2.3 2006/07/14 02:35:53 marc Exp $
+# $snafu: Makefile.inc,v 2.4 2006/07/14 19:56:54 marc Exp $
 #
 # Default installation directories
 #
 PREFIX?=	/usr/local
 BINDIR?=	${PREFIX}/bin
+LIBDIR?=	${PREFIX}/lib
 .if !empty(unix:M*OpenBSD.)
 MANDIR?=	${PREFIX}/man/cat
 .else
@@ -16,7 +17,7 @@ GPS_SERIAL_PORT?=	/dev/tty00
 
 # Program version
 #
-VERSION?=	-DVERSION=\"2.3\"
+VERSION?=	-DVERSION=\"2.4\"
 
 # Which serial I/O code to use, possible choices are
 #   BSD	   for BSD-based systems

@@ -1,9 +1,10 @@
-# $snafu: GNUmakefile.inc,v 2.3 2006/07/14 02:35:53 marc Exp $
+# $snafu: GNUmakefile.inc,v 2.4 2006/07/14 19:56:54 marc Exp $
 #
 # Default installation directories
 #
 PREFIX =  /usr/local
 BINDIR =  ${PREFIX}/bin
+LIBDIR =  ${PREFIX}/lib
 MANDIR =  ${PREFIX}/man
 
 # Name of GPS device
@@ -25,7 +26,7 @@ CFLAGS+=	-DLINUX
 
 # Program version
 #
-CFLAGS+=	-DVERSION=\"2.3\"
+CFLAGS+=	-DVERSION=\"2.4\"
 
 # Other C flags
 #

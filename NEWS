@@ -1,4 +1,9 @@
-# $snafu: NEWS,v 2.3 2006/07/14 02:35:53 marc Exp $
+# $snafu: NEWS,v 2.4 2006/07/14 19:56:54 marc Exp $
+
+List of changes (for 2.4)
+
+ - Apply patch from Andreas Gustafsson to install libgarmin.a
+   under ${PREFIX} like everything else.
 
 List of changes (for 2.3)
 
