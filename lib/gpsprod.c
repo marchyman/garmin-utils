@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsprod.c,v 2.0 2003/10/06 19:13:53 marc Exp $
+ * $snafu: gpsprod.c,v 2.1 2006/07/14 02:35:53 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -33,7 +33,7 @@ int
 gps_product(gps_handle gps, int *product_id, int *software_version,
 	    char **product_description)
 {
-	char rqst = p_prod_rqst;
+	u_char rqst = p_prod_rqst;
 	int retries = 5;
 	u_char *data = malloc(GPS_FRAME_MAX);
 
@@ -55,7 +55,7 @@ gps_product(gps_handle gps, int *product_id, int *software_version,
 						data[3] + (data[4] << 8);
 					if (datalen > 5)
 						*product_description =
-							strdup(&data[5]);
+							strdup((char *) &data[5]);
 					else
 						*product_description = 0;
 					gps_printf(gps, 3, 

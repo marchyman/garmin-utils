@@ -1,5 +1,5 @@
 /*
- * $snafu: gps2.c,v 2.0 2003/10/06 19:13:52 marc Exp $
+ * $snafu: gps2.c,v 2.1 2006/07/14 02:35:53 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -27,7 +27,7 @@
  *	ETX
  */
 static u_char *
-gps_frame(const u_char * buf, int *cnt)
+gps_frame(const u_char * buf, size_t *cnt)
 {
 	int sum = 0;
 	int ix = 0;
@@ -69,7 +69,7 @@ gps_frame(const u_char * buf, int *cnt)
 	/* add the final dle/etx */
 	work[ix++] = dle;
 	work[ix++] = etx;
-	*cnt = ix;
+	*cnt = (size_t) ix;
 	return work;
 }
     
@@ -84,7 +84,7 @@ int
 gps_send(gps_handle gps, const u_char *buf, int cnt)
 {
 	int ok = -1;
-	int len = cnt;
+	size_t len = (size_t) cnt;
 	u_char *data = gps_frame(buf, &len);
 
 	if (data) {
@@ -295,7 +295,7 @@ gps_send_wait(gps_handle gps, const u_char *buf, int cnt, int timeout)
 {
 	int retries = 3;
 	int ok = -1;
-	int len = cnt;
+	size_t len = (size_t) cnt;
 	u_char *data = gps_frame(buf, &len);
 
 	if (data) {

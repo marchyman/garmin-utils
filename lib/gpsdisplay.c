@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsdisplay.c,v 2.0 2003/10/06 19:13:52 marc Exp $
+ * $snafu: gpsdisplay.c,v 2.1 2006/07/14 02:35:53 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -51,21 +51,17 @@ void
 gps_display(char direction, const u_char *buf, int len)
 {
 	u_char	data[DUMP_BUFLEN];
-	int		start;
 
-	start = 0;
 	memset(data, ' ', DUMP_BUFLEN);
 	while (len) {
 		const u_char *d;
 		u_char *h;
 		u_char *a;
 		int cnt;
-		int sent;
 
 		d = buf;
 		h = &data[DUMP_DEC_OFF];
 		a = &data[DUMP_ASCII_OFF];
-		sent = 0;
 
 		if (len > 10) {
 			cnt = 10;
@@ -77,15 +73,15 @@ gps_display(char direction, const u_char *buf, int len)
 		}
 		buf += 10;
 
-		data[1] = direction;
+		data[1] = (u_char) direction;
 		while (cnt--) {
 			if (*d < 128 && isprint(*d))
 				*a++ = *d;
 			else
 				*a++ = '.';
-			*h++ = '0' + *d / 100;
-			*h++ = '0' + *d % 100 / 10;
-			*h++ = '0' + *d % 10;
+			*h++ = (u_char) ('0' + *d / 100);
+			*h++ = (u_char) ('0' + *d % 100 / 10);
+			*h++ = (u_char) ('0' + *d % 10);
 			*h++ = ' ';
 			d++;
 		}

@@ -1,4 +1,4 @@
-# $snafu: Makefile,v 2.0 2003/10/06 19:10:41 marc Exp $
+# $snafu: Makefile,v 2.1 2006/07/14 02:35:53 marc Exp $
 #
 # gardump/garload: programs to dump/load waypoints, routes, and tracks from
 # a garmin gps unit.
@@ -15,7 +15,7 @@ ETAGS:
 .PHONY: prep
 prep:
 	@cd ${.CURDIR} && ${MAKE} cleandir && \
-	 (find . -name obj -type l -print | xargs rm) && \
+	 (find . -name obj -type l -print | xargs -r rm) && \
 	 ${MAKE} etags && mkid && ${MAKE} obj && ${MAKE} depend
 
 .PHONY: todo

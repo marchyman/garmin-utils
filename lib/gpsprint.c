@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsprint.c,v 2.2 2004/08/19 02:45:29 marc Exp $
+ * $snafu: gpsprint.c,v 2.3 2006/07/14 02:35:53 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -49,7 +49,8 @@ get_strings(const u_char *buf, int bufsiz, u_short off, char *strings[],
 		strings[ix] = malloc(STRING_MAX);
 		if (strings[ix] != NULL) {
 			if (off > 0 && bufsiz > off)
-				off += strlcpy(strings[ix], &buf[off],
+				off += strlcpy(strings[ix],
+					       (const char *) &buf[off],
 					       STRING_MAX) + 1;
 			else
 				*strings[ix] = 0;
@@ -68,9 +69,10 @@ get_string(const u_char *buf, int bufsiz, u_short off, u_short len)
 	char *str = NULL;
 
 	if (off != 0 && bufsiz > off) {
-		str = malloc(len + 1);
+		str = malloc((size_t) len + 1);
 		if (str != NULL)
-			strlcpy(str, &buf[off], len + 1);
+			strlcpy(str, (const char *) &buf[off],
+				(size_t) len + 1);
 	}
 	return str;
 }
@@ -335,7 +337,7 @@ print_track(const u_char *trk, int len, int type)
 	float lat;
 	float lon;
 	float alt;
-	time_t time;
+	time_t tim;
 	long new;
 
 	ti = find_trk_info(type);
@@ -345,13 +347,14 @@ print_track(const u_char *trk, int len, int type)
 			printf("Track: %s\n", id);
 			free(id);
 		} else {
-			lat = gps_semicircle2double(&trk[ti->lat_off]);
-			lon = gps_semicircle2double(&trk[ti->long_off]);
-			time = get_int(trk, len, ti->time_off, ti->time_len);
-			if (time != -1) {
-				time += UNIX_TIME_OFFSET;
+			lat = (float) gps_semicircle2double(&trk[ti->lat_off]);
+			lon = (float) gps_semicircle2double(&trk[ti->long_off]);
+			tim = (time_t) get_int(trk, len, ti->time_off,
+					       ti->time_len);
+			if (tim != -1) {
+				tim += UNIX_TIME_OFFSET;
 				strftime(buf, sizeof buf, "%Y-%m-%d %T ",
-					 gmtime(&time));
+					 gmtime(&tim));
 			} else
 				buf[0] = 0;
 			if (ti->alt_off)
@@ -370,7 +373,7 @@ print_track(const u_char *trk, int len, int type)
 }
 
 static void
-print_time(const u_char *utc, int len)
+print_time(const u_char *utc)
 {
 	int month = utc [1];
 	int day   = utc [2];
@@ -403,7 +406,7 @@ gps_print(gps_handle gps, enum gps_cmd_id cmd, const u_char *packet,
 		case p_xfr_begin:
 			rte_newline = 0;
 			count = 0;
-			limit = get_int(packet, len, 1, 2);
+			limit = (int) get_int(packet, len, 1, 2);
 			switch (cmd) {
 			case CMD_RTE:
 				printf(RTE_HDR ", %d records]\n"
@@ -458,7 +461,7 @@ gps_print(gps_handle gps, enum gps_cmd_id cmd, const u_char *packet,
 			print_track(packet, len, gps_get_trk_type(gps));
 			break;
 		case p_utc_data:
-			print_time(packet, len);
+			print_time(packet);
 			break;
 		case p_trk_hdr:
 			print_track(packet, len, gps_get_trk_hdr_type(gps));

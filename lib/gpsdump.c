@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsdump.c,v 2.0 2003/10/06 19:13:52 marc Exp $
+ * $snafu: gpsdump.c,v 2.1 2006/07/14 02:35:53 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -39,7 +39,7 @@ gps_cmd(gps_handle gps, enum gps_cmd_id cmd)
 	}
 
 	cmd_frame[0] = p_cmd_type;
-	cmd_frame[1] = cmd;
+	cmd_frame[1] = (u_char) cmd;
 	cmd_frame[2] = 0;
 	
 	gps_printf(gps, 3, "%s: send command %d\n", __func__, cmd);

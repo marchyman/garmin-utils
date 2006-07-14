@@ -1,4 +1,4 @@
-# $snafu: Makefile.inc,v 2.2 2004/08/19 02:45:29 marc Exp $
+# $snafu: Makefile.inc,v 2.3 2006/07/14 02:35:53 marc Exp $
 #
 # Default installation directories
 #
@@ -16,7 +16,7 @@ GPS_SERIAL_PORT?=	/dev/tty00
 
 # Program version
 #
-VERSION?=	-DVERSION=\"2.2\"
+VERSION?=	-DVERSION=\"2.3\"
 
 # Which serial I/O code to use, possible choices are
 #   BSD	   for BSD-based systems

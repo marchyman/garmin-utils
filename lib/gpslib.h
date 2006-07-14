@@ -1,5 +1,5 @@
 /*
- * $snafu: gpslib.h,v 2.1 2004/08/19 02:45:29 marc Exp $
+ * $snafu: gpslib.h,v 2.2 2006/07/14 02:35:53 marc Exp $
  *
  * Public Domain, 2003, Marco S Hyman <marc@snafu.org>
  */
@@ -155,7 +155,7 @@ void	gps_set_trk_type(gps_handle, int);
 void	gps_set_wpt_type(gps_handle, int);
 int	gps_version(gps_handle);
 int	gps_wait(gps_handle, u_char, int);
-int	gps_write(gps_handle, const u_char *, int);
+int	gps_write(gps_handle, const u_char *, size_t);
 
 /*
  * What to do?  The strlcpy() code is provided for versions of Linux which 

@@ -1,5 +1,5 @@
 /*
- * $snafu: gps1.c,v 2.0 2003/10/06 19:13:52 marc Exp $
+ * $snafu: gps1.c,v 2.1 2006/07/14 02:35:53 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -188,7 +188,7 @@ gps_read(gps_handle gps, u_char * val, int timeout)
 	if (gps == &gps_state) {
 		if (gps_state.bufix >= gps_state.bufcnt) {
 			int stat;
-			struct timeval  time;
+			struct timeval  tv;
 #if SIO_TYPE == BSD
 			struct fd_set   readfds;
 #elif SIO_TYPE == Linux
@@ -196,13 +196,13 @@ gps_read(gps_handle gps, u_char * val, int timeout)
 #else
 #error Unknown SIO_TYPE value
 #endif
-			memset(&time, 0, sizeof time);
-			time.tv_sec = timeout;
+			memset(&tv, 0, sizeof tv);
+			tv.tv_sec = timeout;
 			FD_ZERO(&readfds);
 			FD_SET(gps_state.fd, &readfds);
 			do {
 				stat = select(gps_state.fd + 1, &readfds, 0, 0,
-					      timeout == -1 ? 0 : &time);
+					      timeout == -1 ? 0 : &tv);
 			} while ((stat < 0) && (errno == EINTR));
 			switch (stat) {
 			case -1:
@@ -214,8 +214,8 @@ gps_read(gps_handle gps, u_char * val, int timeout)
 			case 1:
 				gps_state.bufix = 0;
 				gps_state.bufcnt =
-					read(gps_state.fd, gps_state.buf,
-					     GPS_BUF_LEN); 
+					(int) read(gps_state.fd, gps_state.buf,
+						   GPS_BUF_LEN); 
 				if (gps_state.bufcnt <= 0) {
 					if (gps_state.debug)
 						warn(gps_state.name);
@@ -240,17 +240,17 @@ gps_read(gps_handle gps, u_char * val, int timeout)
  * handle and return the write status.
  */
 int
-gps_write(gps_handle gps, const u_char * buf, int cnt)
+gps_write(gps_handle gps, const u_char * buf, size_t cnt)
 {
-	int written;
+	ssize_t written;
 
 	if (gps == &gps_state) {
 		while (cnt > 0) {
 			written = write(gps_state.fd, buf, cnt);
 			if (written > 0) {
 				if (gps_state.debug > 4)
-					gps_display('>', buf, written);
-				cnt -= written;
+					gps_display('>', buf, (int) written);
+				cnt -= (size_t) written;
 				buf += written;
 			} else {
 				if (gps_state.debug)
