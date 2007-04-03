@@ -1,4 +1,4 @@
-$snafu: README,v 2.0 2003/10/06 19:10:41 marc Exp $
+$snafu: README,v 2.1 2007/04/03 17:48:58 marc Exp $
 
 *****
 THE DATA FORMAT OF THIS VERSION IS INCOMPATIBLE WITH VERSIONS PRIOR TO 1.91.
@@ -23,6 +23,8 @@ for a Y2K fix and support for the different waypoint data found
 in the Garmin GPS 12/12XL/48 devices. They hold the copyrights on their
 changes.
 
+GPSmap 76CS screendump support was added by Wolfgang Baudler,
+<wbaudler@gb.nrao.edu>.
 
 To install (BSD):
 
@@ -57,7 +59,7 @@ See the man pages for instructions on use.  Unless changed in step 1,
 both programs look for "/dev/tty00" (BSD) or "/dev/gps" (Linux).
 
 Questions/comments/bitches to marc@snafu.org.  Note: these do what
-I want them to do.  Grigory and Vladislav added code to make it do
-what they wanted.   If the programs don't do what you want start
-writing code :-)   If you feed the patches back to me I'll most
+I want them to do.  Grigory, Vladislav, and Wolfgang added code to
+make it do what they wanted.   If the programs don't do what you want
+start writing code :-)   If you feed the patches back to me I'll most
 likely fold them back in and create a new release.

@@ -1,4 +1,4 @@
-.\" $snafu: gardump.1,v 2.0 2003/10/06 19:14:00 marc Exp $
+.\" $snafu: gardump.1,v 2.1 2007/04/03 17:48:59 marc Exp $
 .\"
 .\" Public Domain, 2001, Marco S Hyman <marc@snafu.org>
 .\"
@@ -10,7 +10,7 @@
 .Nd dump waypoints, routes, and tracks from a Garmin GPS unit
 .Sh SYNOPSIS
 .Nm
-.Op Fl vwrtu
+.Op Fl vwrtus
 .Op Fl d Ar debug-level
 .Op Fl p Ar port
 .Sh DESCRIPTION
@@ -37,6 +37,28 @@ Retrieve the track log and write it to stdout.
 Retrieve the 
 .Tn UTC
 timesamp and write it to stdout.
+.It Fl s
+Print a screenshot in PPM format.   This option has only been tested
+on the GPSmap 76CS.   If the 76CS has the Altimeter screen displayed
+with
+.Va Display Mode
+set to
+.Vt Daytime
+and pressure units set to
+.Vt Inches (Hg)
+the program does some simple character recognition to get the value of
+either the
+.Va "Amb. Pressure"
+or
+.Va "Barometer"
+field (since there is no documented way to read out the pressure values
+directly).  The pressure value is derived from the top left data field of
+the Altimeter screen. It prints a line like
+.Bd -literal -offset indent
+[Altimeter Screen, top left field: 27.44 inHg]
+
+.Ed
+to stderr.
 .It Fl d Ar debug-level
 Enable various levels of debugging output.  Without this option
 debugging is disabled and only critical errors are written to

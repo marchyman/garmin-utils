@@ -1,5 +1,5 @@
 /*
- * $snafu: gardump.c,v 2.0 2003/10/06 19:14:00 marc Exp $
+ * $snafu: gardump.c,v 2.1 2007/04/03 17:48:59 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -24,7 +24,7 @@ usage(const char* prog, const char* err, ...)
 		vfprintf(stderr, err, ap);
 		va_end(ap);
 	}
-	fprintf(stderr, "usage: %s [-vwrtu] [-d debug-level] [-p port]\n",
+	fprintf(stderr, "usage: %s [-vwrtus] [-d debug-level] [-p port]\n",
 		prog);
 	exit(1);
 }
@@ -36,6 +36,7 @@ main(int argc, char * argv[])
 	int routes = 0;
 	int tracks = 0;
 	int utc = 0;
+	int screen = 0;
 	int debug = 0;
 	const char* port = DEFAULT_PORT;
 
@@ -43,7 +44,7 @@ main(int argc, char * argv[])
 	char* rem;
 	gps_handle gps;
 
-	while ((opt = getopt(argc, argv, "d:vwrtup:")) != -1) {
+	while ((opt = getopt(argc, argv, "d:vwrtusp:")) != -1) {
 		switch (opt) {
 		case 'd':
 			debug = strtol(optarg, &rem, 0);
@@ -68,6 +69,9 @@ main(int argc, char * argv[])
 		case 'u':
 			utc = 1;
 			break;
+		case 's':
+			screen = 1;
+			break;
 		case 'p':
 			port = strdup(optarg);
 			break;
@@ -81,12 +85,18 @@ main(int argc, char * argv[])
 	if (argc != optind)
 		errx(1, "unknown command line argument: %s ...", argv[optind]);
 	
-	if (!waypoints && !routes && !tracks && !utc)
+	if (!waypoints && !routes && !tracks && !utc && !screen)
 		waypoints = routes = tracks = utc = 1;
 
+	if (screen && (waypoints || routes || tracks || utc))
+		errx(1, "-s may not be used with -wrtu");
+
 	gps = gps_open(port, debug);
-	printf("[gardump version %s]\n", VERSION);
-	if (gps_version(gps) != 1)
+
+	if (!screen)
+		printf("[gardump version %s]\n", VERSION);
+
+	if (gps_version(gps, !screen) != 1)
 		errx(1, "can't communicate with GPS unit");
 
 	if (utc)
@@ -97,6 +107,9 @@ main(int argc, char * argv[])
 		gps_cmd(gps, CMD_RTE);
 	if (tracks)
 		gps_cmd(gps, CMD_TRK);
+        if (screen)
+	        gps_cmd(gps, CMD_SCREEN);
+		
 	gps_close(gps);
 
 	return 0;

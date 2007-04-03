@@ -1,5 +1,5 @@
 /*
- * $snafu: garload.c,v 2.0 2003/10/06 19:14:06 marc Exp $
+ * $snafu: garload.c,v 2.1 2007/04/03 17:48:59 marc Exp $
  *
  * Placed in the Public Domain by 1998 Marco S. Hyman
  */
@@ -66,7 +66,7 @@ main(int argc, char * argv[])
 		errx(1, "unknown command line argument: %s ...", argv[optind]);
 
 	gps = gps_open(port, debug);
-	if (gps_version(gps) != 1)
+	if (gps_version(gps, 1) != 1)
 		errx(1, "can't communicate with GPS unit");
 
 	lists = gps_format(gps, stdin);

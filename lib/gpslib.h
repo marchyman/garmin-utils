@@ -1,5 +1,5 @@
 /*
- * $snafu: gpslib.h,v 2.2 2006/07/14 02:35:53 marc Exp $
+ * $snafu: gpslib.h,v 2.3 2007/04/03 17:48:59 marc Exp $
  *
  * Public Domain, 2003, Marco S Hyman <marc@snafu.org>
  */
@@ -23,6 +23,7 @@
 #define p_rte_wpt_data	(u_char) 30
 #define p_trk_data	(u_char) 34
 #define p_wpt_data	(u_char) 35
+#define p_scr_shot      (u_char) 69
 #define p_rte_link	(u_char) 98
 #define p_trk_hdr	(u_char) 99
 #define p_cap		(u_char) 253
@@ -48,7 +49,8 @@ enum gps_cmd_id {
     CMD_RTE = 4,
     CMD_UTC = 5,
     CMD_TRK = 6,
-    CMD_WPT = 7
+    CMD_WPT = 7,
+    CMD_SCREEN = 32
 };
 
 /*
@@ -153,7 +155,7 @@ void	gps_set_rte_wpt_type(gps_handle, int);
 void	gps_set_trk_hdr_type(gps_handle, int);
 void	gps_set_trk_type(gps_handle, int);
 void	gps_set_wpt_type(gps_handle, int);
-int	gps_version(gps_handle);
+int	gps_version(gps_handle, int);
 int	gps_wait(gps_handle, u_char, int);
 int	gps_write(gps_handle, const u_char *, size_t);
 

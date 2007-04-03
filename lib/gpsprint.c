@@ -1,5 +1,5 @@
 /*
- * $snafu: gpsprint.c,v 2.3 2006/07/14 02:35:53 marc Exp $
+ * $snafu: gpsprint.c,v 2.4 2007/04/03 17:48:59 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -386,6 +386,96 @@ print_time(const u_char *utc)
 		day, hour, min, sec);
 }
 
+/*
+ * print a screenshot in PPM format (use with redirect of stdout to a file)
+ *
+ * also trys to retrieve pressure reading from top left field of Altimeter display and print it to stderr
+ * (only works if Altimeter display is displayed in daytime mode and with pressure units set to inHg)
+ *
+ * (tested only on Garmin GPSmap 76CS)
+ *
+ * Wolfgang Baudler <wbaudler@gb.nrao.edu>
+ *
+ */
+static void
+print_screenshot(const u_char *packet, int len)
+{
+  static int r[256], g[256], b[256];
+  static int j = 0;
+  static int x = 0, y = 0;
+  static unsigned char byte = 0;
+  static int bitcount = 0;
+  int i;
+  int k;
+  unsigned int digits_id[] = { 0x438, 0x249, 0x26B, 0x267, 0x3C6, 0x26F, 0x35F, 0x2A3, 0x4C7, 0x44F };
+
+  static unsigned int digit[4] = { 0, 0, 0, 0 };
+  int xlow[4] = { 8, 22, 40, 54 };
+  int xhigh[4] = { 20, 34, 52, 66 };
+  
+  static int printed = 0;
+
+/* retrieve image size and output to PPM header  */
+  if ( j == 0 )
+   {  printf("P6\n%d,%d\n255\n", packet[17],packet[21]); 
+   }
+  /* retrieve and store palette info */  
+  else if (j >=1 && j <256)
+    { b[j-1] = packet[9];
+      g[j-1] = packet[10];
+      r[j-1] = packet[11];
+    }
+  /* image data */
+  else if (j >= 257)
+    { 
+      /* process packet less header */
+      for (i=9; i<len; i++)
+	{ 
+	  /* write RGB pixels */
+	  fputc(r[packet[i]],stdout);
+	  fputc(g[packet[i]],stdout);
+	  fputc(b[packet[i]],stdout);
+
+          /* determine digits for pressure reading */
+	
+	  for (k=0; k<4; k++)
+	  { 
+	    if ( (x>=xlow[k] && x<=xhigh[k]) && (y>=44 && y<=46) ) 
+	      { 
+	        byte = byte | ( (r[packet[i]] != 255)<<(7-bitcount) );
+	        bitcount++;
+                if ( (bitcount == 8) || (x == xhigh[k]) )
+	  	  { 
+		    digit[k] += byte;
+		    bitcount = 0;
+		    byte=0;
+	  	  }
+	      }
+
+	  }
+
+          /* update x and y coordinate counters of image */				    
+          x++;
+	  if ( x == 160) { x=0; y++; }
+	}
+
+      /* convert and print pressure value */
+      if ( y > 47 && !printed )
+	{ 
+	  for (k=0; k<4; k++)
+	  {  i=0; while ( (digits_id[i] != digit[k]) && (i<=9) ) { i++; }
+	     digit[k]=i;
+	  }
+
+	  printed = 1;
+
+	  fprintf(stderr, "[Altimeter Screen, top left field: %d%d.%d%d inHg]\n",
+	          digit[0], digit[1], digit[2], digit[3] );
+	} 
+    }  
+  j++;
+}
+
 int
 gps_print(gps_handle gps, enum gps_cmd_id cmd, const u_char *packet,
 	  int len) 
@@ -465,6 +555,9 @@ gps_print(gps_handle gps, enum gps_cmd_id cmd, const u_char *packet,
 			break;
 		case p_trk_hdr:
 			print_track(packet, len, gps_get_trk_hdr_type(gps));
+			break;
+		case p_scr_shot:
+			print_screenshot(packet, len);
 			break;
 		default:
 			printf("[unknown protocol %d]\n", packet[0]);
