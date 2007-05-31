@@ -1,5 +1,5 @@
 /*
- * $snafu: gps1.c,v 2.1 2006/07/14 02:35:53 marc Exp $
+ * $snafu: gps1.c,v 2.2 2007/05/31 17:45:44 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -149,11 +149,11 @@ gps_close(gps_handle gps)
 			return;
 		}
 		if (gps_state.debug)
-			warnx("gpsClose called when no file opened");
+			warnx("gps_close called when no file opened");
 		return;
 	}
 	if (gps_state.debug)
-		warnx("gpsClose called with invalid handle");
+		warnx("gps_close called with invalid handle");
 }
 
 /*

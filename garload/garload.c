@@ -1,5 +1,5 @@
 /*
- * $snafu: garload.c,v 2.1 2007/04/03 17:48:59 marc Exp $
+ * $snafu: garload.c,v 2.2 2007/05/31 17:45:44 marc Exp $
  *
  * Placed in the Public Domain by 1998 Marco S. Hyman
  */
@@ -75,6 +75,8 @@ main(int argc, char * argv[])
 
 	if (gps_load(gps, lists) < 0)
 		errx(1, "failure uploading GPS unit");
+
+	gps_close(gps);
 
 	return 0;
 }
