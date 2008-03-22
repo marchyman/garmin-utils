@@ -1,5 +1,5 @@
 /*
- * $snafu: gps1.c,v 2.2 2007/05/31 17:45:44 marc Exp $
+ * $snafu: gps1.c,v 2.3 2008/03/22 03:54:00 marc Exp $
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */
@@ -107,7 +107,7 @@ gps_open(const char * port, int debug)
 		err(1, "TCGETA");
 	/* save current terminal settings */
 	memcpy(&gps_state.termios, &termios, sizeof gps_state.termios);
-	termios.c_cflag  = (CSIZE & CS8) | CREAD | (CBAUD & B9600);
+	termios.c_cflag  = (CSIZE & CS8) | CREAD | (CBAUD & B9600) | CLOCAL;
 	termios.c_iflag  = termios.c_oflag = termios.c_lflag = (ushort)0;
 	termios.c_oflag  = (ONLRET);
 	if (ioctl(gps_state.fd, TCSETAF, &termios) < 0)
