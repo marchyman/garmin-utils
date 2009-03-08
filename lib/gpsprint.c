@@ -163,7 +163,7 @@ print_waypoint(const u_char *wpt, int len, int type)
 	if (wi != NULL) {
 		lat = gps_semicircle2double(&wpt[wi->lat_off]);
 		lon = gps_semicircle2double(&wpt[wi->long_off]);
-		printf("%10f %11f", lat, lon);
+		printf("%12.8f %13.8f", lat, lon);
 
 		if (wi->alt_off)
 			alt = gps_get_float(&wpt[wi->alt_off]);
@@ -363,7 +363,7 @@ print_track(const u_char *trk, int len, int type)
 				alt = no_val.f;
 			/* skip depth for now */
 			new = get_int(trk, len, ti->new_off, ti->new_len);
-			printf("%s%10f %11f", buf, lat, lon);
+			printf("%s%12.8f %13.8f", buf, lat, lon);
 			if (alt != no_val.f)
 				printf(" %f", alt);
 			printf("%s\n", new ? " start" : "");

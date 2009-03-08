@@ -99,16 +99,26 @@ main(int argc, char * argv[])
 	if (gps_version(gps, !screen) != 1)
 		errx(1, "can't communicate with GPS unit");
 
-	if (utc)
+	if (utc) {
 		gps_cmd(gps, CMD_UTC);
-	if (waypoints)
+		fflush(stdout);
+	}
+	if (waypoints) {
 		gps_cmd(gps, CMD_WPT);
-	if (routes)
+		fflush(stdout);
+	}
+	if (routes) {
 		gps_cmd(gps, CMD_RTE);
-	if (tracks)
+		fflush(stdout);
+	}
+	if (tracks) {
 		gps_cmd(gps, CMD_TRK);
-        if (screen)
+		fflush(stdout);
+	}
+	if (screen) {
 	        gps_cmd(gps, CMD_SCREEN);
+		fflush(stdout);
+	}
 		
 	gps_close(gps);
 
