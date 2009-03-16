@@ -1,4 +1,4 @@
-# $snafu: Makefile,v 2.2 2006/07/14 02:35:53 marc Exp $
+# $Id$
 #
 # Garmin communications protocol library
 #

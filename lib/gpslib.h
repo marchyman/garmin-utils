@@ -1,5 +1,5 @@
 /*
- * $snafu: gpslib.h,v 2.3 2007/04/03 17:48:59 marc Exp $
+ * $Id$
  *
  * Public Domain, 2003, Marco S Hyman <marc@snafu.org>
  */

@@ -1,4 +1,4 @@
-# $snafu: Makefile.inc,v 2.5 2007/04/03 17:48:58 marc Exp $
+# $Id$
 #
 # Default installation directories
 #

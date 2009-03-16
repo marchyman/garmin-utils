@@ -1,5 +1,5 @@
 /* 
- * $snafu: gpsfloat.c,v 2.1 2004/08/19 02:45:29 marc Exp $
+ * $Id$
  *
  * PUBLIC DOMAIN: No Rights Reserved.  Marco S Hyman <marc@snafu.org>
  */

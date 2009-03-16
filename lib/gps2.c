@@ -1,5 +1,5 @@
 /*
- * $snafu: gps2.c,v 2.1 2006/07/14 02:35:53 marc Exp $
+ * $Id$
  *
  * Public Domain, 2001, Marco S Hyman <marc@snafu.org>
  */

@@ -1,4 +1,4 @@
-# $snafu: Makefile,v 2.1 2006/07/14 02:35:53 marc Exp $
+# $Id$
 #
 # gardump/garload: programs to dump/load waypoints, routes, and tracks from
 # a garmin gps unit.

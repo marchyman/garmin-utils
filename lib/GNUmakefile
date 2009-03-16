@@ -1,4 +1,4 @@
-# $snafu: GNUmakefile,v 2.1 2004/11/27 23:06:38 marc Exp $
+# $Id$
 #
 include ../GNUmakefile.inc
 
