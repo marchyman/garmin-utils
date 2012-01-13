@@ -1,30 +1,22 @@
-$Id$
+GARMIN upload/download utilities for older Garmin units such as the
+GPS 12, 12XL, 48, III, and older III+ units.  Starting with version 1.9
+the eMap, eTrex, V and some other units are supported.  The software
+has not been modified to work with modern units using USB instead
+of RS-232 serial I/O.
 
-*****
-THE DATA FORMAT OF THIS VERSION IS INCOMPATIBLE WITH VERSIONS PRIOR TO 1.91.
-You will not be able to upload data saved with previous versions of the
-software.   The easiest way to convert the data formats is to upload using
-an older version of the software then download using this version.
-*****
+These utilities compiled/worked on OpenBSD, NetBSD, and Linux when I
+last checked.  I now use gps units with a USB interface and my desktop
+runs OS X -- I've not used the code in quite a while.  It still compiles
+under OpenBSD (last checked with 5.0).
 
-GARMIN upload/download utilities for the Garmin GPS 12, 12XL, 48, III, and
-III+ units.  Starting with version 1.9 the eMap, eTrex, V and other modern
-units are supported.
+All original code is placed in the Public Domain.
 
-These utilities compile/work on OpenBSD, NetBSD 1.6.1/i386 and Linux.
-The code will not compile with egcs-2.91.66, such as found on NetBSD
-1.5.4_ALPHA.  They may compile/work on other *BSD based systems.  All
-original code is placed in the Public Domain by its author, Marco S
-Hyman.
+GNUmakefiles and Linux support was added by Vladislav Zavjalov.
+Grigory Pupkov added code for a Y2K fix and support for the different
+waypoint data found in the Garmin GPS 12/12XL/48 devices. They hold the
+copyrights on their changes.
 
-GNUmakefiles and Linux support was added by Vladislav Zavjalov,
-<sla@zav.mccme.ru>.  Grigory Pupkov, <pupkov@mccme.ru> added code
-for a Y2K fix and support for the different waypoint data found
-in the Garmin GPS 12/12XL/48 devices. They hold the copyrights on their
-changes.
-
-GPSmap 76CS screendump support was added by Wolfgang Baudler,
-<wbaudler@gb.nrao.edu>.
+GPSmap 76CS screendump support was added by Wolfgang Baudler.
 
 To install (BSD):
 
@@ -63,3 +55,10 @@ I want them to do.  Grigory, Vladislav, and Wolfgang added code to
 make it do what they wanted.   If the programs don't do what you want
 start writing code :-)   If you feed the patches back to me I'll most
 likely fold them back in and create a new release.
+
+*****
+THE DATA FORMAT OF THIS VERSION IS INCOMPATIBLE WITH VERSIONS PRIOR TO 1.91.
+You will not be able to upload data saved with previous versions of the
+software.   The easiest way to convert the data formats is to upload using
+an older version of the software then download using this version.
+*****
