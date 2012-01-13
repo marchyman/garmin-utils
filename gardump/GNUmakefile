@@ -1,5 +1,3 @@
-# $Id$
-#
 # gardump: program to dump waypoints, routes, and tracks from a garmin
 # gps unit.
 

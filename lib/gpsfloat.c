@@ -1,6 +1,4 @@
 /* 
- * $Id$
- *
  * PUBLIC DOMAIN: No Rights Reserved.  Marco S Hyman <marc@snafu.org>
  */
 

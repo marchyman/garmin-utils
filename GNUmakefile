@@ -1,5 +1,3 @@
-# $Id$
-#
 # gardump/garload: programs to dump/load waypoints, routes, and tracks from
 # a garmin gps unit.
 #

@@ -1,5 +1,3 @@
-# $Id$
-#
 # Default installation directories
 #
 PREFIX?=	/usr/local

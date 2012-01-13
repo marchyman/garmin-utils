@@ -1,5 +1,3 @@
-# $Id$
-#
 # Garmin communications protocol library
 #
 LIB=		garmin

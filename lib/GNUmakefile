@@ -1,5 +1,3 @@
-# $Id$
-#
 include ../GNUmakefile.inc
 
 OBJS=		gps1.o gps2.o gpsdisplay.o gpsprod.o gpscap.o gpsdump.o\

@@ -1,5 +1,3 @@
-# $Id$
-#
 # garload: program to load waypoints, routes, and tracks to a garmin
 # gps unit.
 #

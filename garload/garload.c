@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Placed in the Public Domain by 1998 Marco S. Hyman
  */
 

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Public Domain, 2003, Marco S Hyman <marc@snafu.org>
  */
 
