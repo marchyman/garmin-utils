@@ -205,7 +205,7 @@ gps_read(gps_handle gps, u_char * val, int timeout)
 			switch (stat) {
 			case -1:
 				if (gps_state.debug)
-					warn(gps_state.name);
+					warn("%s", gps_state.name);
 				return -1;
 			case 0:
 				return 0;
@@ -216,7 +216,7 @@ gps_read(gps_handle gps, u_char * val, int timeout)
 						   GPS_BUF_LEN); 
 				if (gps_state.bufcnt <= 0) {
 					if (gps_state.debug)
-						warn(gps_state.name);
+						warn("%s", gps_state.name);
 					return -1;
 				}
 				if (gps_state.debug > 4) {
@@ -252,7 +252,7 @@ gps_write(gps_handle gps, const u_char * buf, size_t cnt)
 				buf += written;
 			} else {
 				if (gps_state.debug)
-					warn(gps_state.name);
+					warn("%s", gps_state.name);
 				return -1;
 			}
 		}
